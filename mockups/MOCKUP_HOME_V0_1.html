@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simio Plateado · borrador V0.1</title>
+<style>
+  /* ============================================================
+     SIMIO PLATEADO · MOCKUP HOME V0.1 · 2026-05-08
+     Triple ancla: Nieves (estructura) + Pettibon (ilustración) + Sub Pop 90s (actitud)
+     ============================================================ */
+
+  :root {
+    --paper: #ffffff;
+    --ink: #000000;
+    --rule: #000000;
+    --aire-x: clamp(1.5rem, 5vw, 4rem);
+    --aire-y: clamp(4rem, 12vh, 9rem);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  /* ─── NAV TOP ─────────────────────────────────────────────── */
+  nav.top {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 1.1rem var(--aire-x);
+    background: var(--paper);
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  nav.top .marca { font-weight: 700; }
+  nav.top .links a {
+    text-decoration: none;
+    margin-left: 1.6rem;
+  }
+  nav.top .links a:hover { text-decoration: underline; }
+  nav.top .lang {
+    margin-left: 2.4rem;
+    opacity: 0.5;
+  }
+  nav.top .lang .activo { opacity: 1; font-weight: 700; }
+
+  /* ─── HOME ─────────────────────────────────────────────────── */
+  section.home {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--aire-y) var(--aire-x);
+    position: relative;
+  }
+  section.home img.logo {
+    width: clamp(280px, 38vw, 540px);
+    height: auto;
+    display: block;
+    margin-bottom: 5rem;
+  }
+  section.home p.frase {
+    font-size: 0.92rem;
+    max-width: 26rem;
+    text-align: left;
+    line-height: 1.55;
+    margin: 0;
+    /* deliberadamente desplazada del centro: incomodidad controlada */
+    align-self: center;
+    transform: translateX(-12%);
+  }
+  section.home .pie-home {
+    position: absolute;
+    bottom: 2rem;
+    left: var(--aire-x);
+    right: var(--aire-x);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  /* ─── DROP ─────────────────────────────────────────────────── */
+  section.drop {
+    border-top: 1px solid var(--rule);
+    padding: var(--aire-y) var(--aire-x);
+  }
+  .drop-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: baseline;
+    margin-bottom: 6rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .drop-header .izq { text-align: left; }
+  .drop-header .centro { text-align: center; opacity: 0.55; }
+  .drop-header .der { text-align: right; opacity: 0.55; }
+  .drop-header h2 {
+    font-size: inherit;
+    letter-spacing: inherit;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .pieza-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4rem 1.5rem;
+  }
+  .pieza .frame {
+    width: 100%;
+    aspect-ratio: 4/5;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    position: relative;
+  }
+  .pieza.agotado .frame::after {
+    content: "AGOTADO";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    border: 1px solid var(--ink);
+    padding: 0.4rem 1rem;
+    background: var(--paper);
+  }
+  .pieza .meta {
+    margin-top: 0.9rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  .pieza .meta .titulo {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .pieza .meta .nota {
+    font-variant-numeric: tabular-nums;
+  }
+  .pieza .meta .precio {
+    margin-top: 0.3rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* layout asimétrico — aprendido de Are.na */
+  .pieza.p1 { grid-column: 1 / span 4; }
+  .pieza.p2 { grid-column: 7 / span 3; margin-top: 7rem; }
+  .pieza.p3 { grid-column: 2 / span 3; margin-top: 4rem; }
+  .pieza.p4 { grid-column: 8 / span 4; margin-top: -2rem; }
+
+  /* ─── INTERROGANTE FLOTANTE ─────────────────────────────── */
+  .interrogante {
+    position: absolute;
+    width: 3.2rem;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+  }
+  .interrogante.uno {
+    top: 18vh;
+    right: 8vw;
+    transform: rotate(-4deg);
+  }
+  .interrogante.dos {
+    bottom: 12vh;
+    left: 6vw;
+    transform: rotate(7deg);
+  }
+
+  /* ─── FICHA DE PIEZA ──────────────────────────────────────── */
+  section.ficha {
+    border-top: 1px solid var(--rule);
+    padding: var(--aire-y) var(--aire-x);
+    display: grid;
+    grid-template-columns: 5fr 4fr;
+    gap: 5rem;
+  }
+  section.ficha .imagen {
+    aspect-ratio: 4/5;
+    border: 1px solid var(--ink);
+    align-self: start;
+  }
+  section.ficha .descripcion {
+    padding-top: 1rem;
+  }
+  section.ficha .breadcrumb {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2.4rem;
+    opacity: 0.55;
+  }
+  section.ficha h3 {
+    font-size: 2rem;
+    line-height: 1.05;
+    margin: 0 0 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  section.ficha .specs {
+    font-size: 0.84rem;
+    line-height: 1.7;
+    margin: 0 0 2.4rem;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 1rem 0;
+  }
+  section.ficha .specs dt {
+    display: inline-block;
+    width: 9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+    opacity: 0.55;
+  }
+  section.ficha .specs dd {
+    display: inline;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  section.ficha .specs dl {
+    margin: 0;
+  }
+  section.ficha .specs dl + dl {
+    margin-top: 0.4rem;
+  }
+  section.ficha .texto {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    max-width: 28rem;
+    margin: 0 0 2.4rem;
+  }
+  section.ficha .comprar {
+    display: inline-block;
+    border: 1px solid var(--ink);
+    padding: 1rem 1.6rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  section.ficha .comprar:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ─── ENSAYOS ─────────────────────────────────────────────── */
+  section.ensayos {
+    border-top: 1px solid var(--rule);
+    padding: var(--aire-y) var(--aire-x);
+  }
+  section.ensayos .titulo-seccion {
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 3.5rem;
+  }
+  section.ensayos ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-width: 64rem;
+  }
+  section.ensayos li {
+    border-top: 1px solid var(--ink);
+    padding: 1.4rem 0;
+    display: grid;
+    grid-template-columns: 5rem 1fr 6rem;
+    gap: 1.5rem;
+    align-items: baseline;
+    font-size: 1.05rem;
+  }
+  section.ensayos li:last-child {
+    border-bottom: 1px solid var(--ink);
+  }
+  section.ensayos li .num {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    opacity: 0.55;
+    font-variant-numeric: tabular-nums;
+  }
+  section.ensayos li .titulo-ensayo {
+    font-weight: 400;
+  }
+  section.ensayos li .meta-ensayo {
+    text-align: right;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  /* ─── ABOUT ───────────────────────────────────────────────── */
+  section.about {
+    border-top: 1px solid var(--rule);
+    padding: var(--aire-y) var(--aire-x);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+  section.about .titulo-seccion {
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  section.about p {
+    max-width: 28rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 1.4rem;
+  }
+  section.about p:first-of-type::first-letter {
+    font-weight: 700;
+  }
+
+  /* ─── FOOTER ──────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 2.5rem var(--aire-x);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  footer h4 {
+    font-size: inherit;
+    margin: 0 0 1rem;
+    font-weight: 700;
+  }
+  footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  footer li { margin-bottom: 0.5rem; }
+  footer a { text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer .pie-final {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--ink);
+    padding-top: 1.4rem;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    opacity: 0.55;
+  }
+
+  /* ─── ANOTACIONES (NO PARTE DEL SITIO) ────────────────────── */
+  .anotaciones {
+    background: #f3f3f3;
+    color: #2a2a2a;
+    padding: 4rem var(--aire-x);
+    font-size: 0.86rem;
+    line-height: 1.65;
+    border-top: 4px double var(--ink);
+    font-family: "JetBrains Mono", "Menlo", "Courier New", monospace;
+  }
+  .anotaciones h2 {
+    font-size: 1.05rem;
+    margin: 0 0 2rem;
+    color: var(--ink);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  .anotaciones h3 {
+    font-size: 0.82rem;
+    margin: 2rem 0 0.6rem;
+    color: var(--ink);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  .anotaciones p { margin: 0 0 0.8rem; max-width: 56rem; }
+  .anotaciones .meta {
+    font-size: 0.76rem;
+    opacity: 0.6;
+    margin-bottom: 2rem;
+  }
+
+  /* ─── RESPONSIVE MÍNIMO ──────────────────────────────────── */
+  @media (max-width: 760px) {
+    .pieza.p1, .pieza.p2, .pieza.p3, .pieza.p4 {
+      grid-column: 1 / -1;
+      margin-top: 0;
+    }
+    section.ficha { grid-template-columns: 1fr; }
+    section.about { grid-template-columns: 1fr; }
+    footer { grid-template-columns: 1fr 1fr; }
+    .interrogante { display: none; }
+    section.home p.frase { transform: none; }
+    .drop-header { grid-template-columns: 1fr; gap: 0.6rem; }
+    .drop-header .centro, .drop-header .der { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <span class="marca">Simio Plateado</span>
+  <span class="links">
+    <a href="#drop">drop 001</a>
+    <a href="#ficha">pieza</a>
+    <a href="#ensayos">ensayos</a>
+    <a href="#about">about</a>
+    <span class="lang">
+      <span class="activo">ES</span> · <a href="#">EN</a>
+    </span>
+  </span>
+</nav>
+
+<!-- ═══════════════════════ HOME ═══════════════════════ -->
+<section class="home">
+  <img class="interrogante uno" src="../assets/logo-simio-plateado-wordmark.png" alt="" style="clip-path: inset(0 0 70% 78%); width: 8rem; transform: scale(2.2) translate(-32%, 38%) rotate(-4deg);">
+  <img class="logo" src="../assets/logo-simio-plateado-master.png" alt="Simio Plateado">
+  <p class="frase">No es decoración. No es contenido. Es lo que pasa cuando alguien decide hacer algo con sus manos y firmar la edición.</p>
+  <div class="pie-home">
+    <span>Anti Real Labs / 2026</span>
+    <span>Drop 001 — disponible</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ DROP ═══════════════════════ -->
+<section class="drop" id="drop">
+  <div class="drop-header">
+    <h2 class="izq">Drop 001 — Mayo 2026</h2>
+    <span class="centro">edición limitada · 12 piezas</span>
+    <span class="der">cierra cuando se agote</span>
+  </div>
+  <div class="pieza-grid">
+    <div class="pieza p1">
+      <div class="frame"></div>
+      <div class="meta">
+        <div class="titulo">Tazón pequeño · sin nombre</div>
+        <div class="nota">cerámica esmaltada · ø 14 cm</div>
+        <div class="precio">edición 1 / 6 · €60</div>
+      </div>
+    </div>
+    <div class="pieza p2">
+      <div class="frame"></div>
+      <div class="meta">
+        <div class="titulo">Print "?"</div>
+        <div class="nota">papel reciclado · 30 × 42 cm</div>
+        <div class="precio">edición 1 / 25 · €40</div>
+      </div>
+    </div>
+    <div class="pieza p3 agotado">
+      <div class="frame"></div>
+      <div class="meta">
+        <div class="titulo">Pañuelo plata</div>
+        <div class="nota">algodón teñido · 60 × 60 cm</div>
+        <div class="precio">edición 1 / 8 · agotado</div>
+      </div>
+    </div>
+    <div class="pieza p4">
+      <div class="frame"></div>
+      <div class="meta">
+        <div class="titulo">Cuenco grande · cráter</div>
+        <div class="nota">cerámica · ø 26 cm</div>
+        <div class="precio">edición 1 / 3 · €180</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FICHA ═══════════════════════ -->
+<section class="ficha" id="ficha">
+  <div class="imagen"></div>
+  <div class="descripcion">
+    <div class="breadcrumb">Drop 001 / Pieza 04 / Cerámica</div>
+    <h3>Cuenco grande, cráter</h3>
+    <div class="specs">
+      <dl><dt>Material</dt><dd>cerámica esmaltada al horno reductor</dd></dl>
+      <dl><dt>Medidas</dt><dd>ø 26 × 11 cm</dd></dl>
+      <dl><dt>Edición</dt><dd>1 de 3</dd></dl>
+      <dl><dt>Año</dt><dd>2026</dd></dl>
+      <dl><dt>Estado</dt><dd>disponible</dd></dl>
+    </div>
+    <p class="texto">Las tres piezas de esta edición salieron del mismo horno y comparten un defecto: una marca de quemadura en el borde interior, parecida a un cráter, que el esmalte no llegó a cubrir. La marca quedó. No se corrige. Cada pieza es ligeramente distinta porque lo es.</p>
+    <a class="comprar" href="#">Comprar — €180</a>
+  </div>
+</section>
+
+<!-- ═══════════════════════ ENSAYOS ═══════════════════════ -->
+<section class="ensayos" id="ensayos">
+  <div class="titulo-seccion">Ensayos / textos</div>
+  <ul>
+    <li>
+      <span class="num">001</span>
+      <span class="titulo-ensayo">Por qué edición limitada y por qué firmar</span>
+      <span class="meta-ensayo">2026 / 04</span>
+    </li>
+    <li>
+      <span class="num">002</span>
+      <span class="titulo-ensayo">El esmalte mintió: notas sobre el primer drop</span>
+      <span class="meta-ensayo">2026 / 04</span>
+    </li>
+    <li>
+      <span class="num">003</span>
+      <span class="titulo-ensayo">No es coleccionable, es de uso</span>
+      <span class="meta-ensayo">2026 / 05</span>
+    </li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════ ABOUT ═══════════════════════ -->
+<section class="about" id="about">
+  <div class="titulo-seccion">Manifiesto / qué es esto</div>
+  <div>
+    <p>Simio Plateado es una sub-marca de Anti Real Labs dedicada a editar piezas físicas en tirada corta. Cerámica, textil, gráfica impresa. Cada drop es una edición numerada que cierra cuando se agota.</p>
+    <p>No hay catálogo permanente. No hay descuentos. No hay newsletter para "dejarte enganchado". Si una pieza está, está. Si no está, fue.</p>
+    <p>Si querés escribirnos: <a href="mailto:hola@simioplateado.com">hola@simioplateado.com</a></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+  <div>
+    <h4>Catálogo</h4>
+    <ul>
+      <li><a href="#">Drop actual</a></li>
+      <li><a href="#">Drops anteriores</a></li>
+      <li><a href="#">Archivo / agotado</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>Lectura</h4>
+    <ul>
+      <li><a href="#">Ensayos</a></li>
+      <li><a href="#">Manifiesto</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>Tienda</h4>
+    <ul>
+      <li><a href="#">Cómo comprar</a></li>
+      <li><a href="#">Envíos</a></li>
+      <li><a href="#">Devoluciones</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>Idioma</h4>
+    <ul>
+      <li><a href="#">Español</a></li>
+      <li><a href="#">English</a></li>
+    </ul>
+  </div>
+  <div class="pie-final">
+    <span>© Simio Plateado 2026 · una sub-marca de Anti Real Labs</span>
+    <span>hecho con las manos</span>
+  </div>
+</footer>
+
+<!-- ═══════════════════════ ANOTACIONES ═══════════════════════ -->
+<aside class="anotaciones">
+  <h2>Notas de doctrina aplicada · V0.1</h2>
+  <p class="meta">Estas anotaciones NO son parte del sitio. Viven aquí para que veas qué decidí y por qué. Son la base del documento DOCTRINA_VISUAL_SIMIO_PLATEADO.md que voy a escribir después de tu feedback.</p>
+
+  <h3>1 · Paleta canónica</h3>
+  <p>Solo dos colores: blanco puro #FFFFFF (nunca cream, nunca off-white) y negro puro #000000. Cero grises decorativos. Los matices "opacos" del nav, breadcrumbs y metadata se resuelven con opacity, no con grises de paleta.</p>
+
+  <h3>2 · Tipografía</h3>
+  <p>Una sola familia sans-serif neogrotesca: Helvetica Neue / Helvetica / Arial. La idea es que la voz tipográfica sea silenciosa para que la voz hand-drawn del logo y del "?" sea la única que grita. Si más adelante querés sustituir Helvetica por una grotesca con más carácter (Söhne, GT America, Akzidenz), la sustitución es directa — la jerarquía está montada en pesos y tamaños, no en familia.</p>
+  <p>Para metadata, números de edición y precios uso la misma sans con tabular-nums. Si querés meter una mono industrial (JetBrains Mono, IBM Plex Mono) para esos datos puntuales, decímelo. Le subiría el rasgo "loser" / Sub Pop.</p>
+
+  <h3>3 · Layout</h3>
+  <p>Grid de 12 columnas pero con piezas asimétricamente colocadas (cada pieza ocupa 3-4 columnas, con offsets verticales deliberados). Esto viene de Are.na — heterogeneidad sin uniformar. La home centra el logo pero la frase está desplazada: incomodidad controlada (la doctrina pide "incómodo").</p>
+
+  <h3>4 · El "?" como elemento suelto</h3>
+  <p>El "?" del logo aparece flotando en la home, recortado del wordmark, rotado y escalado. Por ahora es un placeholder técnico (clip-path sobre el png del wordmark) — cuando recorte el "?" como asset standalone en SVG va a quedar mucho más limpio. La idea es que pueda aparecer en cualquier rincón del sitio sin avisar.</p>
+
+  <h3>5 · Drop como entidad temporal</h3>
+  <p>El concepto "drop" tiene fecha, número, status ("disponible / cierra cuando se agote"). Las piezas tienen estado individual ("agotado" rota -8° con el sello tipo institucional). Los drops anteriores no se borran — viven en el archivo. Esto es directamente Sub Pop archivo + Nieves catalogue.</p>
+
+  <h3>6 · Ficha de pieza</h3>
+  <p>Tomada de APFEL (museístico) y Nieves (catalográfico): título grande, ficha técnica delimitada por reglas finas, texto curatorial corto, botón comprar a la derecha. El texto curatorial cuenta el problema de la pieza ("el esmalte mintió") en lugar de venderla — eso es Sub Pop "Loser" en acción.</p>
+
+  <h3>7 · Bilingüismo</h3>
+  <p>Switch ES/EN como link discreto en nav (con el activo en bold) y también listado en footer. Sin bandera, sin globo terráqueo, sin pop-up. La doctrina de no-decoración se aplica también al UI.</p>
+
+  <h3>8 · Ensayos</h3>
+  <p>Listado plano numerado, una línea por ensayo, sin imagen, sin extracto. Es Other Internet despojado — la curiosidad la despierta el título, no el thumbnail.</p>
+
+  <h3>9 · Manifiesto / about corto</h3>
+  <p>Tres párrafos. El segundo es deliberadamente seco ("No hay catálogo permanente. No hay descuentos. No hay newsletter para 'dejarte enganchado'"). Eso es la voz Simio Plateado en acción — anti-corporativo declarado, no eufemístico.</p>
+
+  <h3>10 · Lo que falta y lo que no probé todavía</h3>
+  <p>Las imágenes de pieza son cajas vacías a propósito — no falsifico fotografía. Cuando tengas las primeras fotos reales de cerámica/textil, las metemos. Tampoco probé navegación interna real (drop anterior, archivo, ficha de un ensayo). Lo dejo para una segunda iteración después de tu feedback sobre esta primera lengua visual.</p>
+
+  <h3>Preguntas para vos</h3>
+  <p>· ¿La frase enigmática de home funciona o es demasiado explicativa? ¿Te gustaría que sea más críptica?</p>
+  <p>· ¿La asimetría del grid de drop te resulta interesante o caótica?</p>
+  <p>· ¿Tres ensayos placeholder te dan idea suficiente o querés ver una página de ensayo completa?</p>
+  <p>· ¿El sello "AGOTADO" rotado funciona o es demasiado teatral?</p>
+  <p>· ¿Sumamos mono para números/metadata en una próxima iteración?</p>
+</aside>
+
+</body>
+</html>

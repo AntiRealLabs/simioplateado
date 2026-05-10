@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simio Plateado · TEST 3D · NIETZSCHITO.v01</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; width: 100%;
+    background: #ffffff;
+    color: #000000;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  header.test-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 1rem 2rem;
+    background: #fff;
+    border-bottom: 1px solid #000;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 10;
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  header.test-bar .codigo {
+    font-family: "JetBrains Mono", "Menlo", monospace;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  header.test-bar .test-tag {
+    border: 1px solid #000;
+    padding: 0.4rem 0.8rem;
+    font-weight: 700;
+  }
+  header.test-bar .estado {
+    font-weight: 700;
+  }
+
+  main {
+    padding-top: 5rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .titulo-bloque {
+    padding: 3rem 2rem 2rem;
+    border-bottom: 1px solid #000;
+  }
+  .titulo-bloque h1 {
+    font-family: "JetBrains Mono", "Menlo", monospace;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700; letter-spacing: -0.02em;
+    margin-bottom: 0.4rem;
+  }
+  .titulo-bloque .subtitulo {
+    font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  .visor-3d {
+    flex: 1;
+    width: 100%;
+    height: 70vh;
+    min-height: 500px;
+    background: #fafafa;
+    position: relative;
+  }
+
+  model-viewer {
+    width: 100%;
+    height: 100%;
+    background: #fafafa;
+    --poster-color: transparent;
+  }
+
+  .controles-info {
+    padding: 2rem;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
+    background: #fff;
+    font-size: 0.78rem; line-height: 1.5;
+  }
+  .controles-info h4 {
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700; opacity: 0.55;
+    margin-bottom: 0.5rem;
+  }
+
+  .notas {
+    padding: 3rem 2rem;
+    max-width: 60rem;
+    font-size: 0.92rem; line-height: 1.6;
+  }
+  .notas h2 {
+    font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    opacity: 0.55;
+  }
+  .notas p { margin-bottom: 1rem; max-width: 40rem; }
+
+  .estado-carga {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "JetBrains Mono", "Menlo", monospace;
+    font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+    opacity: 0.55;
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .progreso {
+    position: absolute;
+    bottom: 1rem; left: 1rem; right: 1rem;
+    height: 2px;
+    background: #ddd;
+    z-index: 5;
+  }
+  .progreso-barra {
+    height: 100%;
+    background: #000;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  @media (max-width: 760px) {
+    .controles-info { grid-template-columns: 1fr; gap: 1rem; }
+    header.test-bar { padding: 0.8rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="test-bar">
+  <span class="codigo">NIETZSCHITO.v01</span>
+  <span class="test-tag">TEST · VISOR 3D</span>
+  <span class="estado">IRREAL · sin existencias</span>
+</header>
+
+<main>
+  <div class="titulo-bloque">
+    <h1>NIETZSCHITO.v01</h1>
+    <div class="subtitulo">Modelo 3D · interactivo · 60.3 MB · arrástralo</div>
+  </div>
+
+  <div class="visor-3d">
+    <div class="estado-carga" id="loading-msg">cargando modelo · puede tardar unos segundos</div>
+    <div class="progreso"><div class="progreso-barra" id="progreso-barra"></div></div>
+
+    <model-viewer
+      src="../assets/models/nietzschito.glb"
+      alt="NIETZSCHITO.v01 · figura coleccionable 3D"
+      camera-controls
+      auto-rotate
+      auto-rotate-delay="2000"
+      rotation-per-second="20deg"
+      shadow-intensity="0.8"
+      shadow-softness="1"
+      exposure="1"
+      environment-image="neutral"
+      camera-orbit="0deg 75deg auto"
+      min-camera-orbit="auto auto auto"
+      max-camera-orbit="auto auto auto"
+      min-field-of-view="20deg"
+      max-field-of-view="60deg"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      id="viewer"
+    ></model-viewer>
+  </div>
+
+  <div class="controles-info">
+    <div>
+      <h4>arrastrar</h4>
+      Rotar la pieza en cualquier dirección. Click + arrastrar con el mouse, o un dedo en mobile.
+    </div>
+    <div>
+      <h4>scroll / pellizcar</h4>
+      Zoom in / zoom out. Acercarte para ver el taladro, los headphones, la lata Z-UP en detalle.
+    </div>
+    <div>
+      <h4>botón AR (mobile)</h4>
+      Si abres esto en un teléfono con cámara, puedes "colocar" a Nietzschito en tu escritorio en realidad aumentada.
+    </div>
+  </div>
+
+  <div class="notas">
+    <h2>Notas de la prueba · solo para Juan</h2>
+    <p>Este es el visor 3D embebido con el web component <code>&lt;model-viewer&gt;</code> de Google. Una sola línea de código, controles automáticos, sin librerías pesadas.</p>
+    <p>El modelo carga del archivo <code>../assets/models/nietzschito.glb</code> (60 MB). En el sitio real, el archivo se servirá comprimido con Draco — pesará ~5-8 MB con la misma calidad visual.</p>
+    <p>Si esto se ve bien, en V0.9 reemplazo la imagen estática del modal de Nietzschito por este visor. El visitante podría manipular la pieza completamente. Cuando agreguemos los demás (Marxito, Deleuze-Guattari, Tuni, PLANTI), cada uno tendrá su .glb.</p>
+    <p><strong>Para que cargue, abre este archivo en Chrome real</strong> (no en el visor de Cowork). El visor de Cowork bloquea archivos locales por seguridad. Doble-click en Finder sobre el HTML, o click derecho → Abrir con → Google Chrome.</p>
+  </div>
+</main>
+
+<script>
+  const viewer = document.getElementById('viewer');
+  const msg = document.getElementById('loading-msg');
+  const barra = document.getElementById('progreso-barra');
+
+  viewer.addEventListener('progress', (e) => {
+    const pct = e.detail.totalProgress * 100;
+    barra.style.width = pct + '%';
+    if (pct < 100) {
+      msg.textContent = 'cargando · ' + Math.round(pct) + '%';
+    } else {
+      msg.style.display = 'none';
+      barra.parentElement.style.display = 'none';
+    }
+  });
+
+  viewer.addEventListener('error', (e) => {
+    msg.textContent = 'error al cargar el modelo · ¿abriste el HTML en Chrome real?';
+    msg.style.color = '#c00';
+  });
+</script>
+
+</body>
+</html>
