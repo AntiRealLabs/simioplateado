@@ -1,0 +1,16 @@
+name = "simio-sondeo"
+main = "worker.js"
+compatibility_date = "2026-05-10"
+
+[[routes]]
+pattern = "api.simioplateado.com"
+custom_domain = true
+
+[[kv_namespaces]]
+binding = "VOTES"
+id = "4083728a65294e4f990368d487cef93b"
+
+[[send_email]]
+name = "EMAIL"
+allowed_sender_addresses = ["noreply@simioplateado.com"]
+allowed_destination_addresses = ["numeros@simioplateado.com"]

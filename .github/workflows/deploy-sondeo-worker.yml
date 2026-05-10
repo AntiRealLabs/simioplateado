@@ -1,0 +1,37 @@
+name: Deploy Sondeo Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "workers/simio-sondeo/**"
+      - ".github/workflows/deploy-sondeo-worker.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-worker-sondeo-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy simio-sondeo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
+          command: deploy --config workers/simio-sondeo/wrangler.toml
