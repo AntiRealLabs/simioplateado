@@ -254,30 +254,22 @@ async function sendPreorderEmails(env, preorder, total) {
     `Fecha: ${preorder.timestamp}`,
   ].join("\n");
 
-  const internal = await sendInternalEmail(env, subjectInternal, internalText, "Pre-order Simio");
-  const customer = await sendCustomerPreorderEmail(env, preorder);
+  const internal = await captureEmailResult(() =>
+    sendInternalEmail(env, subjectInternal, internalText, "Pre-order Simio"),
+  );
+  const customer = await captureEmailResult(() => sendCustomerPreorderEmail(env, preorder));
 
   return {
-    ok: true,
+    ok: internal.ok || customer.ok,
     internal: internal.ok,
     customer: customer.ok,
     provider: customer.provider || internal.provider || null,
+    errors: [internal.error, customer.error].filter(Boolean),
   };
 }
 
 async function sendInternalEmail(env, subject, text, fromName) {
-  if (env.EMAIL && typeof env.EMAIL.send === "function") {
-    const result = await env.EMAIL.send({
-      to: INTERNAL_EMAIL,
-      from: { email: "noreply@simioplateado.com", name: fromName },
-      subject,
-      text,
-    });
-
-    return { ok: true, provider: "cloudflare_email", messageId: result && result.messageId };
-  }
-
-  return sendMailChannels(env, {
+  return sendTransactionalEmail(env, {
     to: [{ email: INTERNAL_EMAIL, name: "Juan" }],
     from: { email: "noreply@simioplateado.com", name: fromName },
     subject,
@@ -323,7 +315,7 @@ async function sendCustomerPreorderEmail(env, preorder) {
       ? `Your Simio Plateado pre-order · ${preorder.product}`
       : `Tu pre-order Simio Plateado · ${preorder.product}`;
 
-  return sendMailChannels(env, {
+  return sendTransactionalEmail(env, {
     to: [{ email: preorder.email, name: preorder.nombre || preorder.email }],
     from: { email: "noreply@simioplateado.com", name: "Simio Plateado" },
     subject,
@@ -331,9 +323,51 @@ async function sendCustomerPreorderEmail(env, preorder) {
   });
 }
 
+async function captureEmailResult(sendFn) {
+  try {
+    return await sendFn();
+  } catch (error) {
+    return {
+      ok: false,
+      error: error && (error.code || error.message) ? error.code || error.message : "unknown",
+      status: error && error.status ? error.status : null,
+    };
+  }
+}
+
+async function sendTransactionalEmail(env, message) {
+  const cloudflare = await sendCloudflareEmail(env, message).catch((error) => {
+    if (env.MAILCHANNELS_API_KEY) return null;
+    throw error;
+  });
+
+  if (cloudflare) return cloudflare;
+
+  return sendMailChannels(env, message);
+}
+
+async function sendCloudflareEmail(env, message) {
+  if (!env.EMAIL || typeof env.EMAIL.send !== "function") {
+    throw new Error("cloudflare_email_binding_missing");
+  }
+
+  const result = await env.EMAIL.send({
+    to: message.to.map((recipient) => recipient.email),
+    from: message.from,
+    subject: message.subject,
+    text: message.text,
+  });
+
+  return { ok: true, provider: "cloudflare_email", messageId: result && result.messageId };
+}
+
 async function sendMailChannels(env, message) {
+  if (!env.MAILCHANNELS_API_KEY) {
+    throw new Error("mailchannels_key_missing");
+  }
+
   const headers = { "Content-Type": "application/json" };
-  if (env.MAILCHANNELS_API_KEY) headers["X-Api-Key"] = env.MAILCHANNELS_API_KEY;
+  headers["X-Api-Key"] = env.MAILCHANNELS_API_KEY;
 
   const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
     method: "POST",

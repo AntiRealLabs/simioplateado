@@ -13,4 +13,3 @@ id = "4083728a65294e4f990368d487cef93b"
 [[send_email]]
 name = "EMAIL"
 allowed_sender_addresses = ["noreply@simioplateado.com"]
-allowed_destination_addresses = ["numeros@simioplateado.com"]
