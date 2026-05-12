@@ -14,9 +14,24 @@ const PIEZAS = {
   "planti-punk-xl-v01": "PLANTI_PUNK_XL",
   "planti-k-v01": "PLANTI_K",
   "planti-k-xl-v01": "PLANTI_K_XL",
+  "traumin-v01": "TRAUMIN.v01",
+  "superhombresito-v01": "SUPERHOMBRESITO.v01",
+  "dialoguin-v01": "DIALOGUIN.v01",
+  "mini-devenires-v01": "MINI_DEVENIRES.v01",
+  "parchao-v01": "PARCHAO.v01",
+  "melisimo-v01": "MELISIMO.v01",
+};
+
+const PREORDER_PRODUCTS = {
+  "camiseta-blanca": { name: "CAMISETA_BLANCA", price: 34, sizes: ["S", "M", "L", "XL"] },
+  "camiseta-negra": { name: "CAMISETA_NEGRA", price: 38, sizes: ["S", "M", "L", "XL"] },
+  gorra: { name: "GORRA", price: 44, sizes: ["unitalla"] },
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_TTL_SECONDS = 3600;
+const INTERNAL_EMAIL = "numeros@simioplateado.com";
 
 export default {
   async fetch(request, env, ctx) {
@@ -28,6 +43,14 @@ export default {
 
     if (url.pathname === "/api/sondeo" && request.method === "POST") {
       return handleVoto(request, env, ctx);
+    }
+
+    if (url.pathname === "/api/preorder" && request.method === "OPTIONS") {
+      return corsResponse(request);
+    }
+
+    if (url.pathname === "/api/preorder" && request.method === "POST") {
+      return handlePreorder(request, env, ctx);
     }
 
     if (url.pathname === "/api/admin/votes" && request.method === "GET") {
@@ -101,20 +124,108 @@ async function handleVoto(request, env, ctx) {
   });
 }
 
+async function handlePreorder(request, env, ctx) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse(request, { error: "json_invalido" }, 400);
+  }
+
+  const slug = typeof body.slug === "string" ? body.slug.trim().toLowerCase() : "";
+  const product = PREORDER_PRODUCTS[slug];
+  const nombre = typeof body.nombre === "string" ? body.nombre.trim().slice(0, 120) : "";
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const talla = typeof body.talla === "string" ? body.talla.trim() : "";
+  const price = Number(body.price);
+  const lang = body.lang === "en" ? "en" : "es";
+
+  if (body.mode !== "preorder") {
+    return jsonResponse(request, { error: "modo_invalido" }, 400);
+  }
+
+  if (!product) {
+    return jsonResponse(request, { error: "producto_invalido" }, 400);
+  }
+
+  if (!email || email.length > 200 || !EMAIL_RE.test(email)) {
+    return jsonResponse(request, { error: "email_invalido", message: "Email invalido." }, 400);
+  }
+
+  if (!product.sizes.includes(talla)) {
+    return jsonResponse(request, { error: "talla_invalida", message: "Talla invalida." }, 400);
+  }
+
+  if (price !== product.price) {
+    return jsonResponse(request, { error: "precio_invalido", message: "Precio invalido." }, 400);
+  }
+
+  const rateLimit = await takePreorderSlot(env, request);
+  if (!rateLimit.allowed) {
+    return jsonResponse(
+      request,
+      {
+        error: "rate_limited",
+        message: "Demasiados pre-orders desde esta dirección. Esperá una hora o contactanos.",
+        retry_after: rateLimit.retryAfter,
+      },
+      429,
+    );
+  }
+
+  const timestamp = new Date().toISOString();
+  const preorder = {
+    id: crypto.randomUUID(),
+    slug,
+    product: product.name,
+    nombre,
+    email,
+    talla,
+    price: product.price,
+    mode: "preorder",
+    lang,
+    timestamp,
+    ip_hash: rateLimit.ipHash,
+  };
+
+  await env.VOTES.put(`preorders:${slug}:${timestamp}:${preorder.id}`, JSON.stringify(preorder));
+  const total = await incrementCounter(env, `preorders:${slug}:total`);
+
+  const notification = await sendPreorderEmails(env, preorder, total).catch((error) => {
+    const failure = preorderFailureData(preorder, error);
+    const writeFailure = recordPreorderFailure(env, slug, failure);
+
+    if (ctx && typeof ctx.waitUntil === "function") {
+      ctx.waitUntil(writeFailure);
+    }
+
+    return { ok: false, error: failure.error, status: failure.status || null };
+  });
+
+  return jsonResponse(request, {
+    ok: true,
+    id: preorder.id,
+    total,
+    notified_internal: Boolean(notification.internal),
+    notified_customer: Boolean(notification.customer),
+    provider: notification.provider || null,
+  });
+}
+
 async function enviarNotificacion(env, slug, modo, email, nuevoTotal) {
   const timestamp = new Date().toISOString();
   const pieza = PIEZAS[slug] || slug;
   const subject =
     modo === "email"
-      ? `[SIMIO] Voto con email · ${slug}`
-      : `[SIMIO] Voto silencioso · ${slug}`;
+      ? `[SIMIO] Aviso con email · ${slug}`
+      : `[SIMIO] Interés anónimo · ${slug}`;
 
   const text =
     modo === "email"
       ? [
           `Pieza: ${pieza}`,
           `Slug: ${slug}`,
-          "Modo: con email",
+          "Modo: aviso con email",
           `Email: ${email}`,
           `Total acumulado: ${nuevoTotal}`,
           `Fecha: ${timestamp}`,
@@ -122,15 +233,43 @@ async function enviarNotificacion(env, slug, modo, email, nuevoTotal) {
       : [
           `Pieza: ${pieza}`,
           `Slug: ${slug}`,
-          "Modo: silencioso (anonimo)",
+          "Modo: interes anonimo",
           `Total acumulado: ${nuevoTotal}`,
           `Fecha: ${timestamp}`,
         ].join("\n");
 
+  return sendInternalEmail(env, subject, text, "Simio Plateado");
+}
+
+async function sendPreorderEmails(env, preorder, total) {
+  const subjectInternal = `[SIMIO] Pre-order · ${preorder.product}`;
+  const internalText = [
+    `Producto: ${preorder.product}`,
+    `Slug: ${preorder.slug}`,
+    `Nombre: ${preorder.nombre || "(sin nombre)"}`,
+    `Email: ${preorder.email}`,
+    `Talla: ${preorder.talla}`,
+    `Precio: USD ${preorder.price}`,
+    `Total acumulado producto: ${total}`,
+    `Fecha: ${preorder.timestamp}`,
+  ].join("\n");
+
+  const internal = await sendInternalEmail(env, subjectInternal, internalText, "Pre-order Simio");
+  const customer = await sendCustomerPreorderEmail(env, preorder);
+
+  return {
+    ok: true,
+    internal: internal.ok,
+    customer: customer.ok,
+    provider: customer.provider || internal.provider || null,
+  };
+}
+
+async function sendInternalEmail(env, subject, text, fromName) {
   if (env.EMAIL && typeof env.EMAIL.send === "function") {
     const result = await env.EMAIL.send({
-      to: "numeros@simioplateado.com",
-      from: { email: "noreply@simioplateado.com", name: "Sondeo Simio Plateado" },
+      to: INTERNAL_EMAIL,
+      from: { email: "noreply@simioplateado.com", name: fromName },
       subject,
       text,
     });
@@ -138,20 +277,72 @@ async function enviarNotificacion(env, slug, modo, email, nuevoTotal) {
     return { ok: true, provider: "cloudflare_email", messageId: result && result.messageId };
   }
 
-  if (!env.MAILCHANNELS_API_KEY) {
-    const error = new Error("No notification provider is configured");
-    error.code = "notification_not_configured";
-    throw error;
+  return sendMailChannels(env, {
+    to: [{ email: INTERNAL_EMAIL, name: "Juan" }],
+    from: { email: "noreply@simioplateado.com", name: fromName },
+    subject,
+    text,
+  });
+}
+
+function customerPreorderText(preorder) {
+  if (preorder.lang === "en") {
+    return [
+      preorder.nombre ? `Hi ${preorder.nombre},` : "Hi,",
+      "",
+      "Your pre-order was registered.",
+      "",
+      `Product: ${preorder.product}`,
+      `Size: ${preorder.talla}`,
+      `Price: USD ${preorder.price}`,
+      "",
+      "When the drop closes, we will write to process payment via Lemon Squeezy.",
+      "",
+      "simioplateado.com",
+    ].join("\n");
   }
+
+  return [
+    preorder.nombre ? `Hola ${preorder.nombre},` : "Hola,",
+    "",
+    "Tu pre-order quedó registrado.",
+    "",
+    `Producto reservado: ${preorder.product}`,
+    `Talla: ${preorder.talla}`,
+    `Precio: USD ${preorder.price}`,
+    "",
+    "Cuando el drop cierre, te escribimos para procesar el pago vía Lemon Squeezy.",
+    "",
+    "simioplateado.com",
+  ].join("\n");
+}
+
+async function sendCustomerPreorderEmail(env, preorder) {
+  const subject =
+    preorder.lang === "en"
+      ? `Your Simio Plateado pre-order · ${preorder.product}`
+      : `Tu pre-order Simio Plateado · ${preorder.product}`;
+
+  return sendMailChannels(env, {
+    to: [{ email: preorder.email, name: preorder.nombre || preorder.email }],
+    from: { email: "noreply@simioplateado.com", name: "Simio Plateado" },
+    subject,
+    text: customerPreorderText(preorder),
+  });
+}
+
+async function sendMailChannels(env, message) {
+  const headers = { "Content-Type": "application/json" };
+  if (env.MAILCHANNELS_API_KEY) headers["X-Api-Key"] = env.MAILCHANNELS_API_KEY;
 
   const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Api-Key": env.MAILCHANNELS_API_KEY },
+    headers,
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: "numeros@simioplateado.com", name: "Juan" }] }],
-      from: { email: "noreply@simioplateado.com", name: "Sondeo Simio Plateado" },
-      subject,
-      content: [{ type: "text/plain", value: text }],
+      personalizations: [{ to: message.to }],
+      from: message.from,
+      subject: message.subject,
+      content: [{ type: "text/plain", value: message.text }],
     }),
   });
 
@@ -162,6 +353,52 @@ async function enviarNotificacion(env, slug, modo, email, nuevoTotal) {
   }
 
   return { ok: true, provider: "mailchannels" };
+}
+
+async function takePreorderSlot(env, request) {
+  const ip =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
+    "unknown";
+  const ipHash = await sha256(ip);
+  const key = `preorders:rate:${ipHash}`;
+  const now = Date.now();
+  const raw = await env.VOTES.get(key);
+  let bucket = null;
+
+  if (raw) {
+    try {
+      bucket = JSON.parse(raw);
+    } catch {
+      bucket = null;
+    }
+  }
+
+  if (!bucket || bucket.resetAt <= now) {
+    bucket = { count: 0, resetAt: now + RATE_LIMIT_TTL_SECONDS * 1000 };
+  }
+
+  if (bucket.count >= RATE_LIMIT_MAX) {
+    return {
+      allowed: false,
+      ipHash,
+      retryAfter: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+    };
+  }
+
+  bucket.count += 1;
+  await env.VOTES.put(key, JSON.stringify(bucket), {
+    expirationTtl: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+  });
+
+  return { allowed: true, ipHash, remaining: RATE_LIMIT_MAX - bucket.count };
+}
+
+async function incrementCounter(env, key) {
+  const current = parseInt((await env.VOTES.get(key)) || "0", 10);
+  const next = Number.isFinite(current) ? current + 1 : 1;
+  await env.VOTES.put(key, String(next));
+  return next;
 }
 
 async function handleAdminVotes(request, env) {
@@ -265,6 +502,42 @@ function notificationFailureData(slug, modo, email, total, error) {
   };
 }
 
+async function recordPreorderFailure(env, slug, failure) {
+  const key = `preorders:${slug}:notification_failures`;
+  const existing = await readJsonArray(env, key);
+  existing.push(failure);
+  await env.VOTES.put(key, JSON.stringify(existing.slice(-20)));
+}
+
+function preorderFailureData(preorder, error) {
+  return {
+    id: preorder.id,
+    slug: preorder.slug,
+    email: preorder.email,
+    error: error && (error.code || error.message) ? error.code || error.message : "unknown",
+    status: error && error.status ? error.status : null,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+async function readJsonArray(env, key) {
+  const raw = await env.VOTES.get(key);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function corsResponse(request) {
   return new Response(null, {
     status: 204,
@@ -298,6 +571,6 @@ function corsHeaders(request) {
 
   return {
     "Access-Control-Allow-Origin": origin,
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
