@@ -1,3 +1,5 @@
+import { EmailMessage } from "cloudflare:email";
+
 const ALLOWED_ORIGINS = new Set([
   "https://simioplateado.com",
   "https://www.simioplateado.com",
@@ -351,14 +353,56 @@ async function sendCloudflareEmail(env, message) {
     throw new Error("cloudflare_email_binding_missing");
   }
 
-  const result = await env.EMAIL.send({
-    to: message.to.map((recipient) => recipient.email),
-    from: message.from,
-    subject: message.subject,
-    text: message.text,
-  });
+  const messageIds = [];
 
-  return { ok: true, provider: "cloudflare_email", messageId: result && result.messageId };
+  for (const recipient of message.to) {
+    const email = new EmailMessage(
+      message.from.email,
+      recipient.email,
+      buildRawEmail(message, recipient),
+    );
+    const result = await env.EMAIL.send(email);
+    if (result && result.messageId) messageIds.push(result.messageId);
+  }
+
+  return { ok: true, provider: "cloudflare_email", messageId: messageIds.join(",") || null };
+}
+
+function buildRawEmail(message, recipient) {
+  const headers = [
+    `From: ${formatEmailAddress(message.from)}`,
+    `To: ${formatEmailAddress(recipient)}`,
+    `Subject: ${encodeHeader(message.subject)}`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
+  ];
+
+  return `${headers.join("\r\n")}\r\n\r\n${normalizeEmailBody(message.text)}`;
+}
+
+function formatEmailAddress(address) {
+  const email = sanitizeHeader(address.email);
+  const name = sanitizeHeader(address.name || "");
+  return name ? `${encodeHeader(name)} <${email}>` : email;
+}
+
+function encodeHeader(value) {
+  const clean = sanitizeHeader(value);
+  if (/^[\x20-\x7E]*$/.test(clean)) return clean;
+
+  const bytes = new TextEncoder().encode(clean);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return `=?UTF-8?B?${btoa(binary)}?=`;
+}
+
+function sanitizeHeader(value) {
+  return String(value || "").replace(/[\r\n]+/g, " ").trim();
+}
+
+function normalizeEmailBody(value) {
+  return String(value || "").replace(/\r?\n/g, "\r\n");
 }
 
 async function sendMailChannels(env, message) {
