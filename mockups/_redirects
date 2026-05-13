@@ -1,18 +1,4 @@
-# Cloudflare Pages routing - catch-all para URLs limpias del catalogo
+# Cloudflare Pages routing - catch-all para URLs limpias del catalogo.
+# Los assets existentes se sirven antes de aplicar esta regla.
 
-/tuni                /index.html  200
-/copa                /index.html  200
-/marxito             /index.html  200
-/superhombresito     /index.html  200
-/dialoguin           /index.html  200
-/traumin             /index.html  200
-/mini-devenires      /index.html  200
-/planti-punk         /index.html  200
-/planti-punk-xl      /index.html  200
-/planti-k            /index.html  200
-/planti-k-xl         /index.html  200
-
-/wearables/*         /index.html  200
-/imposible/*         /index.html  200
-
-/*                   /index.html  200
+/*  /index.html  200
