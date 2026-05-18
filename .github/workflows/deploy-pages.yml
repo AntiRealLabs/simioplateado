@@ -32,5 +32,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
+          # Cloudflare Pages is intentionally deployed as a direct-upload
+          # project from GitHub Actions. The Cloudflare dashboard can show
+          # "No Git connection" even though pushes to main deploy through here.
           command: pages deploy mockups --project-name=simio-plateado
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
