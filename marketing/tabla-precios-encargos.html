@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Simio Plateado · Tabla de Precios · Encargos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #e8e8e8;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .poster {
+    width: 1080px;
+    height: 1350px;
+    background: #ffffff;
+    padding: 60px 70px;
+    color: #000;
+    position: relative;
+    border: 1px solid #000;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #000;
+    padding-bottom: 24px;
+    margin-bottom: 30px;
+  }
+
+  .header-left { font-family: 'JetBrains Mono', monospace; }
+
+  .brand {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #999;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-right {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1.5;
+  }
+
+  /* Title */
+  .title {
+    font-family: 'Inter', sans-serif;
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 0.95;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .title-italic {
+    font-style: italic;
+    font-weight: 500;
+    color: #666;
+  }
+
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #666;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+
+  /* Sections */
+  .section {
+    margin-bottom: 26px;
+  }
+
+  .section-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #000;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .section-title-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 400;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: none;
+  }
+
+  /* Tabla de tamaños */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+  }
+
+  .table th,
+  .table td {
+    text-align: left;
+    padding: 8px 4px;
+    border-bottom: 1px dotted #ccc;
+    font-weight: 400;
+  }
+
+  .table th {
+    font-size: 10px;
+    color: #888;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #000;
+  }
+
+  .table .size-code {
+    font-weight: 700;
+    width: 60px;
+  }
+
+  .table .size-range {
+    color: #555;
+    width: 140px;
+  }
+
+  .table .size-price {
+    text-align: right;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  /* Listas inline */
+  .inline-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .inline-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dotted #ddd;
+  }
+
+  .inline-item-label { color: #333; }
+  .inline-item-price { font-weight: 600; }
+  .inline-item-free { color: #000; font-weight: 600; }
+
+  /* Banda destacada */
+  .highlight {
+    background: #000;
+    color: #fff;
+    padding: 12px 16px;
+    margin: 8px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .highlight-label {
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Descuentos cantidad */
+  .qty-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .qty-cell {
+    border: 1px solid #000;
+    padding: 10px 4px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .qty-cell-num {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .qty-cell-pct {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* Cupones */
+  .coupon-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .coupon {
+    border: 1px solid #000;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .coupon-code {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    line-height: 1;
+  }
+
+  .coupon-desc {
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+  }
+
+  /* Footer */
+  .footer {
+    position: absolute;
+    bottom: 40px;
+    left: 70px;
+    right: 70px;
+    border-top: 1px solid #000;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .footer-web {
+    color: #000;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
+
+  .footer-warning {
+    color: #888;
+    font-size: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="poster">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="brand">SIMIO PLATEADO</div>
+      <div class="brand-sub">Anti Real Labs</div>
+    </div>
+    <div class="header-right">
+      Tabla de precios<br>
+      Versión 06.2026
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="title">
+    Encargos<br>
+    <span class="title-italic">personalizados</span>
+  </div>
+  <div class="subtitle">subes tu imagen · imprimimos tu pieza</div>
+
+  <!-- Section: Tamaños -->
+  <div class="section">
+    <div class="section-title">
+      Tamaños base
+      <span class="section-title-sub">rango 10-20 cm · lijado incluido</span>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Talla</th>
+          <th>Altura</th>
+          <th style="text-align:right">Precio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="size-code">S</td>
+          <td class="size-range">10 — 12 cm</td>
+          <td class="size-price">$120.000</td>
+        </tr>
+        <tr>
+          <td class="size-code">M</td>
+          <td class="size-range">12 — 15 cm</td>
+          <td class="size-price">$160.000</td>
+        </tr>
+        <tr>
+          <td class="size-code">L</td>
+          <td class="size-range">15 — 18 cm</td>
+          <td class="size-price">$190.000</td>
+        </tr>
+        <tr>
+          <td class="size-code">XL</td>
+          <td class="size-range">18 — 20 cm</td>
+          <td class="size-price">$215.000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Section: Acabados -->
+  <div class="section">
+    <div class="section-title">
+      Acabados
+      <span class="section-title-sub">elegí tu color</span>
+    </div>
+    <div class="inline-grid">
+      <div class="inline-item">
+        <span class="inline-item-label">Blanco</span>
+        <span class="inline-item-free">incluido</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Dorado</span>
+        <span class="inline-item-price">+ $20.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Negro</span>
+        <span class="inline-item-free">incluido</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Plateado</span>
+        <span class="inline-item-price">+ $20.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Translúcido</span>
+        <span class="inline-item-free">incluido</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Rosado</span>
+        <span class="inline-item-price">+ $20.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Manchas graffiti</span>
+        <span class="inline-item-free">gratis</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Plateado mate</span>
+        <span class="inline-item-price">+ $20.000</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Add-ons -->
+  <div class="section">
+    <div class="section-title">
+      Add-ons
+      <span class="section-title-sub">opcionales</span>
+    </div>
+    <div class="inline-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="inline-item">
+        <span class="inline-item-label">Mini llavero · 5-7 cm</span>
+        <span class="inline-item-price">+ $35.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Estuche S</span>
+        <span class="inline-item-price">+ $30.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Estuche M</span>
+        <span class="inline-item-price">+ $40.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Estuche L</span>
+        <span class="inline-item-price">+ $50.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Estuche XL</span>
+        <span class="inline-item-price">+ $60.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Texto tallado en estuche</span>
+        <span class="inline-item-free">gratis · 20 chars</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Descuentos por cantidad -->
+  <div class="section">
+    <div class="section-title">
+      Descuento por cantidad
+      <span class="section-title-sub">acumulado por pieza</span>
+    </div>
+    <div class="qty-grid">
+      <div class="qty-cell">
+        <div class="qty-cell-num">1ra</div>
+        <div class="qty-cell-pct">100%</div>
+      </div>
+      <div class="qty-cell">
+        <div class="qty-cell-num">2da</div>
+        <div class="qty-cell-pct">−20%</div>
+      </div>
+      <div class="qty-cell">
+        <div class="qty-cell-num">3ra</div>
+        <div class="qty-cell-pct">−30%</div>
+      </div>
+      <div class="qty-cell">
+        <div class="qty-cell-num">4ta</div>
+        <div class="qty-cell-pct">−40%</div>
+      </div>
+      <div class="qty-cell">
+        <div class="qty-cell-num">5+</div>
+        <div class="qty-cell-pct">−50%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Envío -->
+  <div class="section">
+    <div class="highlight">
+      <span class="highlight-label">Envío Medellín y área metropolitana</span>
+      <span>GRATIS</span>
+    </div>
+    <div class="inline-grid" style="grid-template-columns: 1fr 1fr; margin-top: 4px;">
+      <div class="inline-item">
+        <span class="inline-item-label">Resto de Colombia</span>
+        <span class="inline-item-price">$15.000</span>
+      </div>
+      <div class="inline-item">
+        <span class="inline-item-label">Internacional</span>
+        <span class="inline-item-price">a cotizar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Cupones -->
+  <div class="section">
+    <div class="section-title">
+      Cupones de lanzamiento
+      <span class="section-title-sub">uso único por email</span>
+    </div>
+    <div class="coupon-grid">
+      <div class="coupon">
+        <div class="coupon-code">PRIMERA10</div>
+        <div class="coupon-desc">10% off · 1ra compra · todos los tamaños</div>
+      </div>
+      <div class="coupon">
+        <div class="coupon-code">GRANDE15</div>
+        <div class="coupon-desc">15% off · solo tamaños L o XL</div>
+      </div>
+      <div class="coupon">
+        <div class="coupon-code">CER10</div>
+        <div class="coupon-desc">10% off · feria Carlos E. Restrepo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="footer-web">simioplateado.com/encargos</span>
+    <span class="footer-warning">precios estimados · confirmación por email</span>
+  </div>
+
+</div>
+
+</body>
+</html>
