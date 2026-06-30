@@ -5,3 +5,7 @@ dist/
 .env.local
 *.log
 .wrangler/
+tmp/
+output/
+.~lock.*
+**/.~lock.*

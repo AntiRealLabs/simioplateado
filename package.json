@@ -1,0 +1,28 @@
+{
+  "name": "simio-plateado",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "optimize:images": "node scripts/performance-optimize.mjs",
+    "optimize:performance": "node scripts/performance-optimize.mjs",
+    "test:performance-html": "node scripts/performance-report.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AntiRealLabs/simioplateado.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AntiRealLabs/simioplateado/issues"
+  },
+  "homepage": "https://github.com/AntiRealLabs/simioplateado#readme",
+  "devDependencies": {
+    "playwright": "^1.61.0",
+    "sharp": "^0.35.1",
+    "terser": "^5.48.0"
+  }
+}

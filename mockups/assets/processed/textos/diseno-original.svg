@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="190" viewBox="0 0 360 190" role="img" aria-labelledby="title desc">
+  <title id="title">Diseño original</title>
+  <desc id="desc">Sello de Simio Plateado para marcar piezas exclusivas de diseño original.</desc>
+  <g fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M38 96c10-46 65-70 141-70 78 0 139 25 145 70 6 43-48 68-140 68-86 0-155-23-146-68Z" stroke-width="4.5"/>
+    <path d="M48 95c9-36 57-57 130-58 74-1 128 21 134 58 6 37-45 57-129 58-83 1-143-19-135-58Z" stroke-width="2.4" opacity=".72"/>
+    <path d="M78 62c23-8 56-13 98-13 47 0 84 6 108 18" stroke-width="1.9" opacity=".48"/>
+    <path d="M75 130c27 9 65 13 111 12 48-1 84-7 107-18" stroke-width="1.9" opacity=".48"/>
+    <path d="M59 88c-8 6-13 11-15 18" stroke-width="2.1" opacity=".65"/>
+    <path d="M304 82c9 7 14 15 14 25" stroke-width="2.1" opacity=".65"/>
+  </g>
+  <g fill="#111" font-family="JetBrains Mono, Menlo, Courier New, monospace" text-anchor="middle">
+    <text x="180" y="89" font-size="34" font-weight="800" letter-spacing="3">DISEÑO</text>
+    <text x="180" y="123" font-size="32" font-weight="800" letter-spacing="2.5">ORIGINAL</text>
+    <text x="180" y="147" font-size="12" font-weight="700" letter-spacing="4">SIMIO PLATEADO</text>
+  </g>
+  <g fill="none" stroke="#111" stroke-linecap="round" opacity=".55">
+    <path d="M102 39l5 9"/>
+    <path d="M252 45l-7 8"/>
+    <path d="M119 151l-5 8"/>
+    <path d="M270 137l9 7"/>
+  </g>
+</svg>
