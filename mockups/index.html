@@ -2757,6 +2757,333 @@
     background: var(--ink);
     color: var(--paper);
   }
+  .simio-cart-fab {
+    position: fixed;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: 1rem;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 3rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .simio-cart-fab[hidden] {
+    display: none;
+  }
+  .simio-cart-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    border: 1px solid currentColor;
+    font-size: 0.72rem;
+    line-height: 1;
+  }
+  .simio-cart-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    background: rgba(0, 0, 0, 0.18);
+  }
+  .simio-cart-overlay[hidden] {
+    display: none;
+  }
+  .simio-cart-drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 1002;
+    display: flex;
+    flex-direction: column;
+    width: min(100vw, 29rem);
+    height: 100dvh;
+    border-left: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    transform: translateX(105%);
+    transition: transform 180ms ease;
+  }
+  body.simio-cart-open .simio-cart-drawer {
+    transform: translateX(0);
+  }
+  .simio-cart-header,
+  .simio-cart-footer {
+    flex: 0 0 auto;
+    padding: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .simio-cart-footer {
+    border-top: 1px solid var(--rule);
+    border-bottom: 0;
+  }
+  .simio-cart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .simio-cart-title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+  .simio-cart-close,
+  .simio-cart-remove,
+  .simio-cart-qty button,
+  .simio-cart-secondary {
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .simio-cart-close {
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+  }
+  .simio-cart-body {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 1rem;
+  }
+  .simio-cart-empty {
+    margin: 1rem 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+  .simio-cart-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.9rem;
+    padding: 0.95rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .simio-cart-item strong {
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: 0.88rem;
+    line-height: 1.25;
+  }
+  .simio-cart-item small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--muted);
+    font-size: 0.76rem;
+    line-height: 1.3;
+  }
+  .simio-cart-item small strong {
+    display: block;
+    color: var(--ink);
+    font-size: 0.82rem;
+    line-height: 1.3;
+  }
+  .simio-cart-price-before {
+    display: block;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+  .simio-cart-savings {
+    display: block;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .simio-cart-qty {
+    display: inline-grid;
+    grid-template-columns: 2rem 2rem 2rem;
+    align-items: center;
+    border: 1px solid var(--ink);
+  }
+  .simio-cart-qty button {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+  }
+  .simio-cart-qty span {
+    display: grid;
+    place-items: center;
+    height: 2rem;
+    border-inline: 1px solid var(--ink);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+  .simio-cart-remove {
+    margin-top: 0.45rem;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.68rem;
+  }
+  .simio-cart-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 0.8rem;
+    font-weight: 700;
+  }
+  .simio-cart-total span {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+  .simio-cart-total strong {
+    font-size: 1rem;
+  }
+  .simio-cart-discount-line {
+    margin: 0 0 0.45rem;
+    color: var(--ink);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: right;
+  }
+  .simio-cart-discount-line[hidden] {
+    display: none;
+  }
+  .simio-cart-nudge {
+    display: grid;
+    gap: 0.7rem;
+    margin: 1rem 0;
+    padding: 0.85rem;
+    border: 1px solid var(--ink);
+    background: #fff;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+  .simio-cart-nudge strong {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+  .simio-cart-nudge-discount {
+    border-style: dashed;
+  }
+  .simio-cart-profile-discount {
+    margin: 0.7rem 0 1rem;
+    padding: 0.62rem 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+  .simio-cart-recs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .simio-cart-secondary {
+    padding: 0.62rem 0.7rem;
+  }
+  .tienda-actions .simio-cart-size {
+    min-height: 2.45rem;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 0.62rem 0.7rem;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  .simio-cart-form {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .simio-cart-form[hidden] {
+    display: none;
+  }
+  .simio-cart-form label {
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  .simio-cart-form input,
+  .simio-cart-form textarea {
+    width: 100%;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 0.72rem 0.78rem;
+    font: inherit;
+    font-size: 0.86rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .simio-cart-form textarea {
+    min-height: 4.8rem;
+    resize: vertical;
+  }
+  .simio-cart-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .simio-cart-submit {
+    width: 100%;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.9rem 1rem;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .simio-cart-submit:disabled {
+    opacity: 0.58;
+    cursor: default;
+  }
+  .simio-cart-status,
+  .simio-cart-toast {
+    min-height: 1.25rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+  .simio-cart-status.error,
+  .simio-cart-toast.error {
+    color: #8a0000;
+    font-weight: 700;
+  }
+  .simio-cart-status.ok,
+  .simio-cart-toast.ok {
+    font-weight: 700;
+  }
+  .simio-cart-toast {
+    position: fixed;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: 4.6rem;
+    z-index: 1003;
+    max-width: min(24rem, calc(100vw - 2rem));
+    padding: 0.78rem 0.9rem;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.08);
+  }
+  .simio-cart-toast[hidden] {
+    display: none;
+  }
   .espejo-hero {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(18rem, 1.1fr);
@@ -3153,6 +3480,25 @@
     }
     .checkout-fast-button {
       width: 100%;
+    }
+    .simio-cart-fab {
+      right: 0.75rem;
+      bottom: 0.75rem;
+      min-height: 2.75rem;
+      padding: 0.75rem 0.85rem;
+      font-size: 0.72rem;
+    }
+    .simio-cart-drawer {
+      width: 100vw;
+      border-left: 0;
+    }
+    .simio-cart-pair {
+      grid-template-columns: 1fr;
+    }
+    .simio-cart-toast {
+      right: 0.75rem;
+      bottom: 4.1rem;
+      max-width: calc(100vw - 1.5rem);
     }
 	    .producto-galeria .producto-media-principal {
 	      grid-row: auto;
@@ -3780,11 +4126,11 @@
 	    </div>
 
 	    <div class="pieza p38 gestando r33" data-availability="gestando" data-family="simiugs" data-original="true" id="pieza-goticup" onclick="abrirModal('goticup')">
-	      <div class="frame"><img src="assets/optimized/processed/piezas/simiugs/goticup.00ca6b43f2.webp" alt="GOTICUP.v01" width="1200" height="1262" decoding="async" loading="lazy"></div>
+	      <div class="frame"><img src="assets/optimized/processed/piezas/simiugs/goticup-real.ab0825b653.webp" alt="GOTICUP.v01" width="768" height="1024" decoding="async" loading="lazy"></div>
 	      <div class="meta">
 	        <div class="codigo"><img class="codigo-hand codigo-hand-simiug" src="assets/optimized/processed/textos/goticup.121781974b.webp" alt="GOTICUP.v01" width="635" height="295" decoding="async" loading="lazy"></div>
-	        <div class="nota" data-i18n="desc.simiugDigital">objeto conceptual · taza/recipiente</div>
-	        <div class="estado" data-i18n="state.simiugGestando">Gestándose · prototipo de objeto</div>
+	        <div class="nota" data-i18n="desc.goticupFunctional">vaso funcional · acero inoxidable</div>
+	        <div class="estado" data-i18n="state.simiugFunctional">Prototipo real · vaso funcional</div>
 	      </div>
 	    </div>
 
@@ -6267,6 +6613,7 @@
     return window.__modelViewerLoading;
   };
 </script>
-<script src="assets/optimized/app.1072eaf2dd.js" defer></script>
+<script src="assets/optimized/app.fe34114363.js" defer></script>
+<script src="assets/optimized/cart.4342c15f80.js" defer></script>
 </body>
 </html>

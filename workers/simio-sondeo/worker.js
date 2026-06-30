@@ -219,6 +219,17 @@ const CHECKOUT_PRODUCTS = {
     stock: 1,
     enabled: true,
   },
+  "sphinx-tenebrosa": {
+    slug: "sphinx-tenebrosa",
+    name: "PA-002 · SPHINX TENEBROSA",
+    title: "PA-002 · SPHINX TENEBROSA",
+    description:
+      "SPHINX TENEBROSA, pieza fisica dorada de Panteon Argenti Vol. I. Diseño original Simio Plateado, impresion FDM de alta duracion y acabado brillante. Precio de lanzamiento. Envio nacional incluido en Colombia. Para envios internacionales, te contactamos antes del despacho con una cotizacion exacta.",
+    priceUsd: 63,
+    defaultPriceCop: 250000,
+    stock: 1,
+    enabled: true,
+  },
   "coleccion-feli": {
     slug: "coleccion-feli",
     name: "COLECCION_FELI.v01",
@@ -317,6 +328,9 @@ const RATE_LIMIT_TTL_SECONDS = 3600;
 const CHECKOUT_RATE_LIMIT_MAX = 10;
 const CHECKOUT_RATE_LIMIT_TTL_SECONDS = 3600;
 const CHECKOUT_RECORD_TTL_SECONDS = 60 * 60 * 24 * 30;
+const CHECKOUT_CART_MAX_LINES = 12;
+const CHECKOUT_CART_MAX_QUANTITY = 10;
+const CHECKOUT_CART_DISCOUNT_RULE = "2a pieza -20%, 3a -30%, 4a -40%, 5a+ -50%";
 const CHECKOUT_ISSUE_RATE_LIMIT_MAX = 12;
 const CHECKOUT_ISSUE_RATE_LIMIT_TTL_SECONDS = 3600;
 const CHECKOUT_ISSUE_RECORD_TTL_SECONDS = 60 * 60 * 24 * 30;
@@ -350,6 +364,10 @@ const ANALYTICS_EVENTS = [
   "checkout_return",
   "checkout_issue_opened",
   "checkout_issue_reported",
+  "cart_add",
+  "cart_checkout_start",
+  "cart_checkout_redirect",
+  "cart_checkout_error",
   "shipping_cost_viewed",
   "international_quote_started",
   "international_quote_requested",
@@ -2283,55 +2301,16 @@ async function handleCheckout(request, env, ctx) {
     return jsonResponse(request, { error: "json_invalido" }, 400);
   }
 
-  const slug = typeof body.slug === "string" ? body.slug.trim().toLowerCase() : "";
   const lang = body.lang === "en" ? "en" : "es";
-  const baseProduct = CHECKOUT_PRODUCTS[slug];
-
-  if (!baseProduct) {
-    return jsonResponse(request, { error: "producto_invalido" }, 400);
-  }
-
-  if (!isCheckoutEnabled(env, baseProduct)) {
+  const cart = await resolveCheckoutCart(env, body, lang);
+  if (!cart.ok) {
     return jsonResponse(
       request,
       {
-        error: "checkout_no_disponible",
-        message:
-          lang === "en"
-            ? "This piece is not open for checkout yet."
-            : "Esta pieza todavía no tiene compra abierta.",
+        error: cart.error,
+        message: cart.message,
       },
-      409,
-    );
-  }
-
-  const soldOut = await isCheckoutSoldOut(env, baseProduct);
-  if (soldOut) {
-    return jsonResponse(
-      request,
-      {
-        error: "checkout_agotado",
-        message:
-          lang === "en"
-            ? "This edition is sold out for now."
-            : "Esta edición está agotada por ahora.",
-      },
-      409,
-    );
-  }
-
-  const priceCop = resolveCheckoutPriceCop(env, baseProduct);
-  if (!priceCop) {
-    return jsonResponse(
-      request,
-      {
-        error: "checkout_precio_no_configurado",
-        message:
-          lang === "en"
-            ? "Checkout price is not configured yet."
-            : "El precio de checkout todavía no está configurado.",
-      },
-      503,
+      cart.status || 400,
     );
   }
 
@@ -2359,21 +2338,6 @@ async function handleCheckout(request, env, ctx) {
 	            : "Los pedidos internacionales se cotizan antes del pago para confirmar el total final y posibles impuestos.",
       },
       409,
-    );
-  }
-
-  const talla = cleanText(body.talla || body.size || body.variant, 80);
-  if (baseProduct.sizes?.length && !baseProduct.sizes.includes(talla)) {
-    return jsonResponse(
-      request,
-      {
-        error: "talla_invalida",
-        message:
-          lang === "en"
-            ? "Please choose a valid size before payment."
-            : "Elegí una talla válida antes del pago.",
-      },
-      400,
     );
   }
 
@@ -2416,17 +2380,26 @@ async function handleCheckout(request, env, ctx) {
 
   const timestamp = new Date().toISOString();
   const orderId = await createOrderId(env);
+  const checkoutId = crypto.randomUUID();
+  const externalReference = `simio:${cart.checkoutSlug}:${checkoutId}:${orderId}`;
   const checkout = {
-    id: crypto.randomUUID(),
+    id: checkoutId,
     order_id: orderId,
-    slug,
-    product: baseProduct.name,
-    title: baseProduct.title,
-    price_usd: baseProduct.priceUsd,
-    price_cop: priceCop,
+    slug: cart.checkoutSlug,
+    product: cart.productName,
+    title: cart.title,
+    items: cart.items,
+    payment_items: cart.paymentItems,
+    items_summary: cart.summary,
+    quantity_total: cart.quantityTotal,
+    subtotal_cop: cart.subtotalCop,
+    discount_cop: cart.discountCop,
+    discount_rule: cart.discountRule,
+    price_usd: cart.totalUsd,
+    price_cop: cart.totalCop,
     currency: "COP",
-    stock: baseProduct.stock,
-    talla: talla || null,
+    stock: cart.stock,
+    talla: cart.singleTalla,
     lang,
     provider: "mercadopago",
     status: "created",
@@ -2435,19 +2408,25 @@ async function handleCheckout(request, env, ctx) {
     customer_email: orderInput.customer.email,
     customer_name: orderInput.customer.nombre,
   };
-  const externalReference = `simio:${slug}:${checkout.id}:${orderId}`;
   const order = {
     id: orderId,
     external_reference: externalReference,
     checkout_id: checkout.id,
-    pieza: baseProduct.name,
-    title: baseProduct.title,
-    slug,
-    talla: talla || null,
-    tipo: "compra_directa",
-    monto_usd: baseProduct.priceUsd,
-    monto: priceCop,
+    pieza: cart.productName,
+    title: cart.title,
+    slug: cart.checkoutSlug,
+    talla: cart.singleTalla,
+    tipo: cart.quantityTotal > 1 ? "compra_carrito" : "compra_directa",
+    monto_usd: cart.totalUsd,
+    monto: cart.totalCop,
     moneda: "COP",
+    items: cart.items,
+    payment_items: cart.paymentItems,
+    items_summary: cart.summary,
+    quantity_total: cart.quantityTotal,
+    subtotal_cop: cart.subtotalCop,
+    discount_cop: cart.discountCop,
+    discount_rule: cart.discountRule,
     cliente_nombre: orderInput.customer.nombre,
     cliente_email: orderInput.customer.email,
     cliente_telefono: orderInput.customer.telefono,
@@ -2485,14 +2464,25 @@ async function handleCheckout(request, env, ctx) {
   let preference;
   try {
     preference = await createMercadoPagoPreference(env, {
-      ...baseProduct,
-      priceCop,
+      slug: cart.checkoutSlug,
+      name: cart.productName,
+      title: cart.title,
+      description: cart.summary,
+      priceUsd: cart.totalUsd,
+      priceCop: cart.totalCop,
+      stock: cart.stock,
+      items: cart.items,
+      paymentItems: cart.paymentItems,
+      subtotalCop: cart.subtotalCop,
+      discountCop: cart.discountCop,
+      discountRule: cart.discountRule,
+      quantityTotal: cart.quantityTotal,
       externalReference,
       checkoutId: checkout.id,
       orderId,
       customer: orderInput.customer,
       shipping: orderInput.shipping,
-      talla,
+      talla: cart.singleTalla,
       lang,
     });
   } catch (error) {
@@ -2506,9 +2496,9 @@ async function handleCheckout(request, env, ctx) {
     });
 
     if (ctx && typeof ctx.waitUntil === "function") {
-      ctx.waitUntil(recordCheckoutFailure(env, slug, failure));
+      ctx.waitUntil(recordCheckoutFailure(env, cart.checkoutSlug, failure));
     } else {
-      await recordCheckoutFailure(env, slug, failure);
+      await recordCheckoutFailure(env, cart.checkoutSlug, failure);
     }
 
     return jsonResponse(
@@ -2567,6 +2557,10 @@ async function handleCheckout(request, env, ctx) {
     id: checkout.id,
     order_id: orderId,
     product: checkout.product,
+    items: checkout.items,
+    quantity_total: checkout.quantity_total,
+    subtotal_cop: checkout.subtotal_cop,
+    discount_cop: checkout.discount_cop,
     price_usd: checkout.price_usd,
     price_cop: checkout.price_cop,
     currency: checkout.currency,
@@ -2574,6 +2568,395 @@ async function handleCheckout(request, env, ctx) {
     checkout_url: checkoutUrl,
     provider: "mercadopago",
   });
+}
+
+async function resolveCheckoutCart(env, body, lang) {
+  const requested = normalizeCheckoutItems(body);
+  if (!requested.length) {
+    return {
+      ok: false,
+      error: "producto_invalido",
+      message:
+        lang === "en"
+          ? "Choose at least one product before payment."
+          : "Elegí al menos un producto antes del pago.",
+    };
+  }
+
+  if (requested.length > CHECKOUT_CART_MAX_LINES) {
+    return {
+      ok: false,
+      error: "carrito_demasiado_grande",
+      status: 400,
+      message:
+        lang === "en"
+          ? "The cart has too many different products."
+          : "El carrito tiene demasiados productos distintos.",
+    };
+  }
+
+  const grouped = new Map();
+  for (const item of requested) {
+    const quantity = normalizeCheckoutQuantity(item.quantity);
+    if (!quantity) {
+      return {
+        ok: false,
+        error: "cantidad_invalida",
+        status: 400,
+        message:
+          lang === "en"
+            ? "Choose a valid quantity for every product."
+            : "Elegí una cantidad válida para cada producto.",
+      };
+    }
+
+    const slug = cleanText(item.slug, 80).toLowerCase();
+    const talla = cleanText(item.talla || item.size || item.variant, 80);
+    if (!slug) {
+      return {
+        ok: false,
+        error: "producto_invalido",
+        status: 400,
+        message:
+          lang === "en"
+            ? "One product in the cart is invalid."
+            : "Hay un producto inválido en el carrito.",
+      };
+    }
+
+    const key = `${slug}::${talla}`;
+    const existing = grouped.get(key) || { slug, talla, quantity: 0 };
+    existing.quantity += quantity;
+    if (existing.quantity > CHECKOUT_CART_MAX_QUANTITY) {
+      return {
+        ok: false,
+        error: "cantidad_invalida",
+        status: 400,
+        message:
+          lang === "en"
+            ? "Reduce the quantity for one product before payment."
+            : "Reducí la cantidad de una pieza antes del pago.",
+      };
+    }
+    grouped.set(key, existing);
+  }
+
+  if (grouped.size > CHECKOUT_CART_MAX_LINES) {
+    return {
+      ok: false,
+      error: "carrito_demasiado_grande",
+      status: 400,
+      message:
+        lang === "en"
+          ? "The cart has too many different products."
+          : "El carrito tiene demasiados productos distintos.",
+    };
+  }
+
+  const stockRequested = new Map();
+  const enriched = [];
+  for (const item of grouped.values()) {
+    const product = CHECKOUT_PRODUCTS[item.slug];
+    if (!product) {
+      return {
+        ok: false,
+        error: "producto_invalido",
+        status: 400,
+        message:
+          lang === "en"
+            ? "One product in the cart is invalid."
+            : "Hay un producto inválido en el carrito.",
+      };
+    }
+
+    if (!isCheckoutEnabled(env, product)) {
+      return {
+        ok: false,
+        error: "checkout_no_disponible",
+        status: 409,
+        message:
+          lang === "en"
+            ? "One piece in the cart is not open for checkout yet."
+            : "Una pieza del carrito todavía no tiene compra abierta.",
+      };
+    }
+
+    const priceCop = resolveCheckoutPriceCop(env, product);
+    if (!priceCop) {
+      return {
+        ok: false,
+        error: "checkout_precio_no_configurado",
+        status: 503,
+        message:
+          lang === "en"
+            ? "A checkout price is not configured yet."
+            : "Un precio de checkout todavía no está configurado.",
+      };
+    }
+
+    let talla = item.talla;
+    if (product.sizes?.length) {
+      if (!talla && product.sizes.length === 1) talla = product.sizes[0];
+      if (!product.sizes.includes(talla)) {
+        return {
+          ok: false,
+          error: "talla_invalida",
+          status: 400,
+          message:
+            lang === "en"
+              ? "Please choose a valid size before payment."
+              : "Elegí una talla válida antes del pago.",
+        };
+      }
+    }
+
+    stockRequested.set(product.slug, (stockRequested.get(product.slug) || 0) + item.quantity);
+    enriched.push({
+      slug: product.slug,
+      product: product.name,
+      title: product.title,
+      description: product.description,
+      quantity: item.quantity,
+      talla: talla || null,
+      unit_price_cop: priceCop,
+      unit_price_usd: product.priceUsd,
+      price_cop: priceCop * item.quantity,
+      price_usd: roundUsd(product.priceUsd * item.quantity),
+      stock: product.stock,
+    });
+  }
+
+  for (const [slug, quantity] of stockRequested.entries()) {
+    const product = CHECKOUT_PRODUCTS[slug];
+    if (!Number.isFinite(product.stock) || product.stock <= 0) continue;
+    const approved = await readCounter(env, `checkout:${slug}:approved_total`);
+    const remaining = Math.max(0, product.stock - approved);
+    if (quantity > remaining) {
+      return {
+        ok: false,
+        error: "checkout_agotado",
+        status: 409,
+        message:
+          lang === "en"
+            ? "One piece in the cart is sold out or does not have enough units left."
+            : "Una pieza del carrito está agotada o no tiene unidades suficientes.",
+      };
+    }
+  }
+
+  const priced = applyCheckoutCartDiscounts(env, enriched);
+  const quantityTotal = priced.quantityTotal;
+  const single = priced.items.length === 1 ? priced.items[0] : null;
+
+  return {
+    ok: true,
+    items: priced.items,
+    paymentItems: priced.paymentItems,
+    quantityTotal,
+    subtotalCop: priced.subtotalCop,
+    discountCop: priced.discountCop,
+    discountRule: priced.discountRule,
+    totalCop: priced.totalCop,
+    totalUsd: priced.totalUsd,
+    checkoutSlug: single ? single.slug : "cart",
+    productName: single ? single.product : `Carrito Simio (${quantityTotal} piezas)`,
+    title: single ? single.title : "Carrito Simio Plateado",
+    stock: single ? single.stock : null,
+    singleTalla: single ? single.talla : null,
+    summary: checkoutItemsSummary(priced.items),
+  };
+}
+
+function checkoutCartMultiplierForPosition(env, position) {
+  if (position <= 1) return envNumber(env, "MULTIPLIER_PIECE_1", 1);
+  if (position === 2) return envNumber(env, "MULTIPLIER_PIECE_2", 0.8);
+  if (position === 3) return envNumber(env, "MULTIPLIER_PIECE_3", 0.7);
+  if (position === 4) return envNumber(env, "MULTIPLIER_PIECE_4", 0.6);
+  return envNumber(env, "MULTIPLIER_PIECE_5_PLUS", 0.5);
+}
+
+function checkoutCartDiscountPercent(multiplier) {
+  return Math.max(0, Math.round((1 - Number(multiplier || 1)) * 100));
+}
+
+function applyCheckoutCartDiscounts(env, items) {
+  const lineTotals = items.map(() => ({
+    subtotal_cop: 0,
+    discount_cop: 0,
+    price_cop: 0,
+    subtotal_usd: 0,
+    discount_usd: 0,
+    price_usd: 0,
+    discounts: [],
+  }));
+  const units = [];
+
+  items.forEach((item, lineIndex) => {
+    for (let unitIndex = 0; unitIndex < item.quantity; unitIndex += 1) {
+      units.push({
+        lineIndex,
+        unitIndex,
+        item,
+        baseCop: Math.round(Number(item.unit_price_cop) || 0),
+        baseUsd: Number(item.unit_price_usd) || 0,
+      });
+    }
+  });
+
+  units.sort((a, b) => (
+    b.baseCop - a.baseCop ||
+    a.lineIndex - b.lineIndex ||
+    a.unitIndex - b.unitIndex
+  ));
+
+  const paymentGroups = new Map();
+  let subtotalCop = 0;
+  let discountCop = 0;
+  let totalCop = 0;
+  let subtotalUsd = 0;
+  let discountUsd = 0;
+  let totalUsd = 0;
+
+  units.forEach((unit, index) => {
+    const position = index + 1;
+    const multiplier = checkoutCartMultiplierForPosition(env, position);
+    const discountPercent = checkoutCartDiscountPercent(multiplier);
+    const priceCop = Math.max(0, Math.round(unit.baseCop * multiplier));
+    const unitDiscountCop = Math.max(0, unit.baseCop - priceCop);
+    const priceUsd = roundUsd(unit.baseUsd * multiplier);
+    const unitDiscountUsd = roundUsd(unit.baseUsd - priceUsd);
+    const totals = lineTotals[unit.lineIndex];
+
+    totals.subtotal_cop += unit.baseCop;
+    totals.discount_cop += unitDiscountCop;
+    totals.price_cop += priceCop;
+    totals.subtotal_usd += unit.baseUsd;
+    totals.discount_usd += unitDiscountUsd;
+    totals.price_usd += priceUsd;
+
+    subtotalCop += unit.baseCop;
+    discountCop += unitDiscountCop;
+    totalCop += priceCop;
+    subtotalUsd += unit.baseUsd;
+    discountUsd += unitDiscountUsd;
+    totalUsd += priceUsd;
+
+    if (unitDiscountCop > 0) {
+      totals.discounts.push({
+        position,
+        percent: discountPercent,
+        amount_cop: unitDiscountCop,
+      });
+    }
+
+    const variant = unit.item.talla ? `Talla/variante: ${unit.item.talla}` : "";
+    const discountLabel = discountPercent > 0 ? `${discountPercent}% off combo` : "";
+    const paymentKey = [
+      unit.item.slug,
+      unit.item.talla || "",
+      priceCop,
+      discountPercent,
+    ].join("::");
+    const existing = paymentGroups.get(paymentKey);
+
+    if (existing) {
+      existing.quantity += 1;
+      existing.discount_cop += unitDiscountCop;
+      return;
+    }
+
+    paymentGroups.set(paymentKey, {
+      id: `${unit.item.slug}-${position}-${priceCop}`,
+      slug: unit.item.slug,
+      product: unit.item.product,
+      title: unit.item.title,
+      description: [unit.item.product, variant, discountLabel].filter(Boolean).join(" · "),
+      quantity: 1,
+      talla: unit.item.talla || null,
+      unit_price_cop: priceCop,
+      base_unit_price_cop: unit.baseCop,
+      discount_cop: unitDiscountCop,
+      discount_percent: discountPercent,
+    });
+  });
+
+  const pricedItems = items.map((item, index) => {
+    const totals = lineTotals[index];
+    return {
+      ...item,
+      subtotal_cop: totals.subtotal_cop,
+      discount_cop: totals.discount_cop,
+      price_cop: totals.price_cop,
+      subtotal_usd: roundUsd(totals.subtotal_usd),
+      discount_usd: roundUsd(totals.discount_usd),
+      price_usd: roundUsd(totals.price_usd),
+      discounts: totals.discounts,
+    };
+  });
+
+  return {
+    items: pricedItems,
+    paymentItems: Array.from(paymentGroups.values()),
+    quantityTotal: units.length,
+    subtotalCop,
+    discountCop,
+    discountRule: CHECKOUT_CART_DISCOUNT_RULE,
+    totalCop,
+    subtotalUsd: roundUsd(subtotalUsd),
+    discountUsd: roundUsd(discountUsd),
+    totalUsd: roundUsd(totalUsd),
+  };
+}
+
+function normalizeCheckoutItems(body) {
+  if (Array.isArray(body.items)) {
+    return body.items.map((item) => {
+      if (typeof item === "string") return { slug: item, quantity: 1, talla: "" };
+      const source = item || {};
+      return {
+        slug: source.slug || source.id || source.product || source.producto,
+        quantity: source.quantity ?? source.qty ?? source.cantidad ?? 1,
+        talla: source.talla || source.size || source.variant,
+      };
+    });
+  }
+
+  const slug = typeof body.slug === "string" ? body.slug.trim().toLowerCase() : "";
+  if (!slug) return [];
+  return [
+    {
+      slug,
+      quantity: 1,
+      talla: body.talla || body.size || body.variant,
+    },
+  ];
+}
+
+function normalizeCheckoutQuantity(value) {
+  const raw = value == null || value === "" ? 1 : Number.parseInt(String(value), 10);
+  if (!Number.isFinite(raw) || raw < 1 || raw > CHECKOUT_CART_MAX_QUANTITY) return null;
+  return raw;
+}
+
+function roundUsd(value) {
+  return Number((Number(value) || 0).toFixed(2));
+}
+
+function checkoutItemsSummary(items) {
+  return items.map((item) => checkoutItemLine(item)).join(" + ");
+}
+
+function checkoutItemLine(item) {
+  const variant = item.talla ? ` (${item.talla})` : "";
+  return `${item.quantity} x ${item.product}${variant}`;
+}
+
+function checkoutItemPriceLine(item) {
+  const base = `- ${checkoutItemLine(item)}`;
+  if (Number(item.discount_cop) > 0) {
+    return `${base} · ${formatCopPlain(item.subtotal_cop)} - descuento ${formatCopPlain(item.discount_cop)} = ${formatCopPlain(item.price_cop)}`;
+  }
+  return `${base} · ${formatCopPlain(item.price_cop)}`;
 }
 
 function enabledInternationalCountries(env) {
@@ -3611,11 +3994,23 @@ async function isCheckoutSoldOut(env, product) {
 async function createMercadoPagoPreference(env, product) {
   const siteUrl = normalizeBaseUrl(env.SIMIO_SITE_URL || SITE_URL);
   const apiUrl = normalizeBaseUrl(env.SIMIO_API_URL || API_URL);
-
-  return mercadoPagoRequest(env, "/checkout/preferences", {
-    method: "POST",
-    body: {
-      items: [
+  const sourceItems = Array.isArray(product.paymentItems) && product.paymentItems.length
+    ? product.paymentItems
+    : product.items;
+  const preferenceItems = Array.isArray(sourceItems) && sourceItems.length
+    ? sourceItems.map((item) => {
+        const quantity = item.quantity || 1;
+        const unitPrice = item.unit_price_cop || Math.round((Number(item.price_cop) || 0) / quantity);
+        return {
+          id: item.id || item.slug,
+          title: item.title,
+          description: item.description || [item.product, item.talla ? `Talla/variante: ${item.talla}` : ""].filter(Boolean).join(" · "),
+          quantity,
+          unit_price: unitPrice,
+          currency_id: "COP",
+        };
+      })
+    : [
         {
           id: product.slug,
           title: product.title,
@@ -3624,7 +4019,12 @@ async function createMercadoPagoPreference(env, product) {
           unit_price: product.priceCop,
           currency_id: "COP",
         },
-      ],
+      ];
+
+  return mercadoPagoRequest(env, "/checkout/preferences", {
+    method: "POST",
+    body: {
+      items: preferenceItems,
       external_reference: product.externalReference,
       notification_url: `${apiUrl}/api/mercadopago/webhook`,
       payer: {
@@ -3652,10 +4052,16 @@ async function createMercadoPagoPreference(env, product) {
         order_id: product.orderId,
         product_slug: product.slug,
         product_name: product.name,
+        items_count: preferenceItems.length,
+        quantity_total: product.quantityTotal || 1,
+        items_summary: product.description || null,
         customer_email: product.customer?.email || null,
         size: product.talla || null,
         price_usd: product.priceUsd,
         price_cop: product.priceCop,
+        subtotal_cop: product.subtotalCop || product.priceCop,
+        discount_cop: product.discountCop || 0,
+        discount_rule: product.discountRule || null,
         stock_run: product.stock,
         language: product.lang,
       },
@@ -3694,16 +4100,27 @@ async function mercadoPagoRequest(env, path, options) {
 }
 
 async function sendCheckoutCreatedEmail(env, checkout) {
+  const itemLines = Array.isArray(checkout.items) && checkout.items.length
+    ? checkout.items.map((item) => checkoutItemPriceLine(item))
+    : [`- ${checkout.product}${checkout.talla ? ` (${checkout.talla})` : ""} · ${formatCopPlain(checkout.price_cop)}`];
+  const discountLines = Number(checkout.discount_cop) > 0
+    ? [
+        `Subtotal sin descuento: ${formatCopPlain(checkout.subtotal_cop)}`,
+        `Descuento automatico (${checkout.discount_rule || CHECKOUT_CART_DISCOUNT_RULE}): -${formatCopPlain(checkout.discount_cop)}`,
+      ]
+    : [];
   const text = [
     `Producto: ${checkout.product}`,
-    `Slug: ${checkout.slug}`,
+    `Slug principal: ${checkout.slug}`,
     `Orden: ${checkout.order_id || "(sin orden)"}`,
     `Checkout ID: ${checkout.id}`,
     `Cliente: ${checkout.customer_name || "(sin nombre)"}`,
     `Email cliente: ${checkout.customer_email || "(sin email)"}`,
-    `Talla/variante: ${checkout.talla || "(no aplica)"}`,
+    `Items (${checkout.quantity_total || itemLines.length}):`,
+    ...itemLines,
     `Envio: ${checkout.shipping_summary || "(sin direccion)"}`,
     `Preferencia Mercado Pago: ${checkout.preference_id || "(sin id)"}`,
+    ...discountLines,
     `Precio visible: USD ${checkout.price_usd}`,
     `Cobro Mercado Pago: COP ${checkout.price_cop}`,
     `URL: ${checkout.checkout_url}`,
@@ -4029,11 +4446,10 @@ async function handleMercadoPagoWebhook(request, env, ctx) {
     expirationTtl: CHECKOUT_RECORD_TTL_SECONDS,
   });
 
-  if (payment.status === "approved") {
-    await incrementCounter(env, `checkout:${slug}:approved_total`);
-  }
-
   const order = await applyPaymentToOrder(env, orderId, payment, paymentRecord);
+  if (payment.status === "approved") {
+    await incrementApprovedCheckoutCounters(env, slug, order);
+  }
 
   if (ctx && typeof ctx.waitUntil === "function") {
     ctx.waitUntil(sendPaymentNotificationEmail(env, paymentRecord, order).catch(() => null));
@@ -4066,6 +4482,15 @@ async function applyPaymentToOrder(env, orderId, payment, paymentRecord) {
 }
 
 async function sendPaymentNotificationEmail(env, paymentRecord, order) {
+  const itemLines = Array.isArray(order?.items) && order.items.length
+    ? order.items.map((item) => checkoutItemPriceLine(item))
+    : [];
+  const discountLines = Number(order?.discount_cop) > 0
+    ? [
+        `Subtotal sin descuento: ${formatCopPlain(order.subtotal_cop)}`,
+        `Descuento automatico (${order.discount_rule || CHECKOUT_CART_DISCOUNT_RULE}): -${formatCopPlain(order.discount_cop)}`,
+      ]
+    : [];
   const text = [
     `Orden: ${paymentRecord.order_id || "(sin orden)"}`,
     `Producto slug: ${paymentRecord.slug}`,
@@ -4077,7 +4502,9 @@ async function sendPaymentNotificationEmail(env, paymentRecord, order) {
     `Cliente: ${order?.cliente_nombre || "(no disponible)"}`,
     `Email comprador: ${order?.cliente_email || paymentRecord.payer_email || "(no disponible)"}`,
     `Telefono: ${order?.cliente_telefono || "(no disponible)"}`,
-    `Talla/variante: ${order?.talla || "(no aplica)"}`,
+    itemLines.length ? `Items (${order?.quantity_total || itemLines.length}):` : `Talla/variante: ${order?.talla || "(no aplica)"}`,
+    ...itemLines,
+    ...discountLines,
     `Envio: ${order ? formatOrderAddress(order) : "(no disponible)"}`,
     `Fulfillment: ${order?.estado_fulfillment || "(sin estado)"}`,
     `Fecha: ${paymentRecord.timestamp}`,
@@ -4089,6 +4516,22 @@ async function sendPaymentNotificationEmail(env, paymentRecord, order) {
     text,
     "Checkout Simio",
   );
+}
+
+async function incrementApprovedCheckoutCounters(env, fallbackSlug, order) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  if (!items.length) {
+    if (fallbackSlug) await incrementCounter(env, `checkout:${fallbackSlug}:approved_total`);
+    return;
+  }
+
+  await Promise.all(
+    items.map((item) => incrementCounterBy(env, `checkout:${item.slug}:approved_total`, item.quantity || 1)),
+  );
+
+  if (fallbackSlug === "cart" || items.length > 1) {
+    await incrementCounter(env, "checkout:cart:approved_total");
+  }
 }
 
 async function recordCheckoutFailure(env, slug, failure) {
@@ -4115,8 +4558,13 @@ function normalizeBaseUrl(value) {
 }
 
 async function incrementCounter(env, key) {
+  return incrementCounterBy(env, key, 1);
+}
+
+async function incrementCounterBy(env, key, amount = 1) {
   const current = parseInt((await env.VOTES.get(key)) || "0", 10);
-  const next = Number.isFinite(current) ? current + 1 : 1;
+  const step = Number.isFinite(Number(amount)) && Number(amount) > 0 ? Math.round(Number(amount)) : 1;
+  const next = Number.isFinite(current) ? current + step : step;
   await env.VOTES.put(key, String(next));
   return next;
 }
