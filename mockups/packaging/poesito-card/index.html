@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>POESITO.v01 · tarjeta de empaque (80 x 160 mm)</title>
+  <style>
+    :root {
+      --paper: #f7f1e4;
+      --ink: #111;
+      --muted: #6f6a60;
+      --gold: #b88a2a;
+      --night: #242230;
+      --blood: #742027;
+      --mist: #b6b1c7;
+    }
+
+    * { box-sizing: border-box; }
+
+    @page {
+      size: 80mm 160mm;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      background: #f3f3f1;
+      color: var(--ink);
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    .sheet {
+      min-height: 100vh;
+      padding: 42px;
+      display: flex;
+      gap: 34px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 320px;
+      height: 640px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(255,255,255,0.86), transparent 24%),
+        linear-gradient(135deg, rgba(0,0,0,0.025), transparent 34%),
+        var(--paper);
+      border: 1.4px solid var(--ink);
+      box-shadow: 0 18px 46px rgba(0,0,0,0.13);
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(17,17,17,0.18);
+      pointer-events: none;
+    }
+
+    .topline {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .edition,
+    .source {
+      color: var(--muted);
+    }
+
+    .front {
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .figure-stage {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      margin: 10px 0 6px;
+      border: 1px solid rgba(17,17,17,0.16);
+      background:
+        linear-gradient(90deg, transparent 0 49%, rgba(17,17,17,0.08) 49% 50%, transparent 50%),
+        linear-gradient(180deg, transparent 0 49%, rgba(17,17,17,0.08) 49% 50%, transparent 50%),
+        rgba(255,255,255,0.35);
+    }
+
+    .figure-stage::before {
+      content: "";
+      position: absolute;
+      inset: 42px 18px;
+      border: 1px dashed rgba(17,17,17,0.2);
+      transform: rotate(-2deg);
+    }
+
+    .spray {
+      position: absolute;
+      z-index: 1;
+      border-radius: 50%;
+      filter: blur(18px);
+      opacity: 0.43;
+    }
+
+    .spray.one {
+      width: 172px;
+      height: 230px;
+      right: -54px;
+      top: 96px;
+      background: var(--blood);
+    }
+
+    .spray.two {
+      width: 156px;
+      height: 208px;
+      left: -57px;
+      bottom: 94px;
+      background: var(--mist);
+    }
+
+    .figure-main {
+      position: absolute;
+      z-index: 4;
+      left: 24px;
+      bottom: 12px;
+      width: 232px;
+      height: 436px;
+      object-fit: contain;
+      object-position: bottom center;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,0.18));
+    }
+
+    .ghost {
+      position: absolute;
+      z-index: 3;
+      object-fit: contain;
+      opacity: 0.7;
+      mix-blend-mode: multiply;
+      filter: saturate(0.9) contrast(1.08);
+      border: 1px solid rgba(17,17,17,0.18);
+      background: rgba(255,255,255,0.32);
+    }
+
+    .ghost.real {
+      width: 84px;
+      height: 118px;
+      top: 24px;
+      right: 16px;
+      object-fit: cover;
+      transform: rotate(4deg);
+    }
+
+    .ghost.shadow {
+      width: 92px;
+      height: 92px;
+      left: 13px;
+      top: 44px;
+      transform: rotate(-5deg);
+      opacity: 0.56;
+    }
+
+    .front-title {
+      position: relative;
+      z-index: 5;
+      padding: 13px 0 0;
+      border-top: 1px solid var(--ink);
+    }
+
+    .title-type {
+      margin: 0 0 9px;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 28px;
+      line-height: 0.95;
+      letter-spacing: 0.025em;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .front-title p {
+      margin: 0;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .batch {
+      margin-top: 11px;
+      display: flex;
+      justify-content: space-between;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .back {
+      padding: 26px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .back .topline {
+      width: 100%;
+      margin-bottom: 28px;
+    }
+
+    .brand-wordmark {
+      width: 210px;
+      height: 150px;
+      object-fit: contain;
+      margin: 6px 0 0;
+      opacity: 0.92;
+      filter: contrast(1.38) brightness(0.72);
+      transform: rotate(-2deg);
+    }
+
+    .rule {
+      width: 138px;
+      height: 11px;
+      margin: 24px auto 38px;
+      border-bottom: 3px solid var(--gold);
+      transform: rotate(-1deg);
+    }
+
+    .quote {
+      position: relative;
+      z-index: 3;
+      max-width: 238px;
+      margin: 0 auto;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      line-height: 1.18;
+      font-weight: 700;
+    }
+
+    .quote::before,
+    .quote::after {
+      color: var(--gold);
+      font-size: 46px;
+      line-height: 0;
+      position: absolute;
+      opacity: 0.72;
+    }
+
+    .quote::before {
+      content: "\201C";
+      left: -18px;
+      top: 14px;
+    }
+
+    .quote::after {
+      content: "\201D";
+      right: -20px;
+      bottom: 0;
+    }
+
+    .source {
+      margin: 18px 0 0;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .signature {
+      margin-top: auto;
+      width: 138px;
+      height: 100px;
+      object-fit: contain;
+      opacity: 0.78;
+      filter: grayscale(1) contrast(1.35);
+      transform: rotate(-4deg);
+    }
+
+    .stamp {
+      position: absolute;
+      right: 24px;
+      bottom: 34px;
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border: 1.4px solid var(--ink);
+      border-radius: 50%;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 16px;
+      font-weight: 800;
+      transform: rotate(8deg);
+      opacity: 0.48;
+    }
+
+    .scratch {
+      position: absolute;
+      height: 2px;
+      background: var(--ink);
+      opacity: 0.32;
+      transform-origin: left center;
+    }
+
+    .scratch.a { width: 64px; left: 26px; top: 152px; transform: rotate(-12deg); }
+    .scratch.b { width: 90px; right: 22px; top: 198px; transform: rotate(7deg); }
+    .scratch.c { width: 74px; left: 40px; bottom: 120px; transform: rotate(5deg); }
+
+    .red-smudge {
+      position: absolute;
+      width: 112px;
+      height: 30px;
+      right: 30px;
+      bottom: 103px;
+      background: linear-gradient(90deg, transparent, rgba(116,32,39,0.58), transparent);
+      filter: blur(7px);
+      transform: rotate(8deg);
+      opacity: 0.52;
+    }
+
+    .print-note {
+      position: fixed;
+      left: 16px;
+      bottom: 14px;
+      color: #777;
+      font-family: "Menlo", monospace;
+      font-size: 11px;
+    }
+
+    @media print {
+      html, body { background: white; margin: 0; padding: 0; }
+      .sheet {
+        padding: 0;
+        min-height: auto;
+        display: block;
+        gap: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: none;
+        width: 80mm;
+        height: 160mm;
+        page-break-after: always;
+        break-after: page;
+      }
+
+      .card:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      .print-note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet" aria-label="Mockup de tarjeta doble para POESITO.v01">
+    <section class="card front" aria-label="Frente de tarjeta">
+      <div class="topline">
+        <span>SIMIO PLATEADO</span>
+        <span class="edition">Literatos</span>
+      </div>
+
+      <div class="figure-stage">
+        <div class="spray one"></div>
+        <div class="spray two"></div>
+        <img class="ghost shadow" src="assets/poemo.png" alt="Sombra digital de POESITO">
+        <img class="ghost real" src="assets/poesito-real.jpg" alt="POESITO fisico dorado">
+        <img class="figure-main" src="assets/poesito-main-cutout.png" alt="Ilustracion principal de POESITO">
+      </div>
+
+      <div class="front-title">
+        <h1 class="title-type">POESITO.v01</h1>
+        <p>pieza FDM &middot; corazon portatil &middot; cuervo interior</p>
+        <div class="batch">
+          <span>SP-002</span>
+          <span>Medell&iacute;n</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card back" aria-label="Reverso de tarjeta">
+      <div class="topline">
+        <span>certificado m&iacute;nimo</span>
+        <span>SP-002</span>
+      </div>
+
+      <img class="brand-wordmark" src="assets/brand-wordmark-real.png" alt="Logotipo Simio Plateado">
+      <div class="rule"></div>
+
+      <p class="quote">Todo lo que vemos o parecemos es solo un sue&ntilde;o dentro de un sue&ntilde;o.</p>
+      <p class="source">Edgar Allan Poe &middot; A Dream Within a Dream &middot; 1849</p>
+
+      <div class="scratch a"></div>
+      <div class="scratch b"></div>
+      <div class="scratch c"></div>
+      <div class="red-smudge"></div>
+      <img class="signature" src="assets/firma-jdme.png" alt="Firma">
+      <div class="stamp">SP</div>
+    </section>
+  </main>
+
+  <div class="print-note">Vista mockup &middot; listo para imprimir a 80 x 160 mm / 8 x 16 cm (una tarjeta por p&aacute;gina)</div>
+</body>
+</html>

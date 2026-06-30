@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GABITO.v01 · tarjeta de empaque (80 x 160 mm)</title>
+  <style>
+    :root {
+      --paper: #f7f1e4;
+      --paper-deep: #eee4d0;
+      --ink: #111;
+      --muted: #6f6a60;
+      --gold: #b88a2a;
+      --mariposa: #f4c430;
+      --selva: #2d6a4f;
+    }
+
+    * { box-sizing: border-box; }
+
+    @page {
+      size: 80mm 160mm;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      background: #f3f3f1;
+      color: var(--ink);
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    .sheet {
+      min-height: 100vh;
+      padding: 42px;
+      display: flex;
+      gap: 34px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 320px;
+      height: 640px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(255,255,255,0.85), transparent 24%),
+        linear-gradient(135deg, rgba(0,0,0,0.025), transparent 34%),
+        var(--paper);
+      border: 1.4px solid var(--ink);
+      box-shadow: 0 18px 46px rgba(0,0,0,0.13);
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(17,17,17,0.18);
+      pointer-events: none;
+    }
+
+    .front {
+      padding: 22px 20px 22px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .front .topline,
+    .back .topline {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .front .edition {
+      color: var(--muted);
+    }
+
+    .figure-stage {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      margin: 10px 0 6px;
+      border: 1px solid rgba(17,17,17,0.16);
+      background:
+        linear-gradient(90deg, transparent 0 49%, rgba(17,17,17,0.08) 49% 50%, transparent 50%),
+        linear-gradient(180deg, transparent 0 49%, rgba(17,17,17,0.08) 49% 50%, transparent 50%),
+        rgba(255,255,255,0.33);
+    }
+
+    .figure-stage::before {
+      content: "";
+      position: absolute;
+      inset: 42px 18px;
+      border: 1px dashed rgba(17,17,17,0.2);
+      transform: rotate(-2deg);
+    }
+
+    .figure-main {
+      position: absolute;
+      z-index: 4;
+      left: 34px;
+      bottom: 22px;
+      width: 212px;
+      height: 460px;
+      object-fit: contain;
+      object-position: bottom center;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,0.16));
+    }
+
+    .ghost {
+      position: absolute;
+      z-index: 3;
+      object-fit: contain;
+      opacity: 0.74;
+      mix-blend-mode: multiply;
+      filter: saturate(1.35) contrast(1.05);
+    }
+
+    /* Mariposas amarillas grandes flotando en el stage del frente */
+    .mariposa-front {
+      position: absolute;
+      z-index: 5;
+    }
+
+    .mariposa-front svg { display: block; width: 100%; height: 100%; }
+
+    .mariposa-front.uno {
+      width: 56px; height: 56px;
+      top: 26px; right: 18px;
+      transform: rotate(18deg);
+      opacity: 0.92;
+    }
+
+    .mariposa-front.dos {
+      width: 42px; height: 42px;
+      top: 88px; left: 14px;
+      transform: rotate(-12deg);
+      opacity: 0.85;
+    }
+
+    .mariposa-front.tres {
+      width: 36px; height: 36px;
+      top: 168px; right: 26px;
+      transform: rotate(-22deg);
+      opacity: 0.75;
+    }
+
+    .mariposa-front.cuatro {
+      width: 28px; height: 28px;
+      bottom: 188px; left: 32px;
+      transform: rotate(36deg);
+      opacity: 0.65;
+    }
+
+    .mariposa-front.cinco {
+      width: 22px; height: 22px;
+      bottom: 130px; right: 14px;
+      transform: rotate(8deg);
+      opacity: 0.55;
+    }
+
+    .spray {
+      position: absolute;
+      z-index: 1;
+      border-radius: 50%;
+      filter: blur(18px);
+      opacity: 0.5;
+    }
+
+    .spray.one {
+      width: 172px;
+      height: 230px;
+      right: -54px;
+      top: 96px;
+      background: var(--selva);
+    }
+
+    .spray.two {
+      width: 156px;
+      height: 208px;
+      left: -57px;
+      bottom: 94px;
+      background: var(--mariposa);
+    }
+
+    .spray.three {
+      width: 110px;
+      height: 130px;
+      left: 28%;
+      top: 38%;
+      background: var(--mariposa);
+      opacity: 0.32;
+      filter: blur(28px);
+    }
+
+    .front-title {
+      position: relative;
+      z-index: 4;
+      padding: 12px 0 0;
+      border-top: 1px solid var(--ink);
+    }
+
+    .front-title h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      font-weight: 900;
+    }
+
+    .front-title p {
+      margin: 8px 0 0;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .front-title .batch {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .back {
+      padding: 26px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .back .topline {
+      width: 100%;
+      margin-bottom: 28px;
+    }
+
+    .brand-wordmark {
+      width: 210px;
+      height: 150px;
+      object-fit: contain;
+      margin: 6px 0 0;
+      opacity: 0.92;
+      filter: contrast(1.38) brightness(0.72);
+      transform: rotate(-2deg);
+    }
+
+    .rule {
+      width: 138px;
+      height: 11px;
+      margin: 26px auto 32px;
+      border-bottom: 3px solid var(--gold);
+      transform: rotate(-1deg);
+    }
+
+    .quote {
+      position: relative;
+      z-index: 3;
+      max-width: 240px;
+      margin: 0 auto;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      line-height: 1.22;
+      font-weight: 700;
+    }
+
+    .quote::before,
+    .quote::after {
+      color: var(--gold);
+      font-size: 46px;
+      line-height: 0;
+      position: absolute;
+      opacity: 0.7;
+    }
+
+    .quote::before {
+      content: "\201C";
+      left: -18px;
+      top: 14px;
+    }
+
+    .quote::after {
+      content: "\201D";
+      right: -20px;
+      bottom: 0;
+    }
+
+    .source {
+      margin: 18px 0 0;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .signature {
+      margin-top: auto;
+      width: 138px;
+      height: 100px;
+      object-fit: contain;
+      opacity: 0.78;
+      filter: grayscale(1) contrast(1.35);
+      transform: rotate(-4deg);
+    }
+
+    .stamp {
+      position: absolute;
+      right: 24px;
+      bottom: 34px;
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border: 1.4px solid var(--ink);
+      border-radius: 50%;
+      font-family: "Menlo", "JetBrains Mono", monospace;
+      font-size: 16px;
+      font-weight: 800;
+      transform: rotate(8deg);
+      opacity: 0.48;
+    }
+
+    .scratch {
+      position: absolute;
+      height: 2px;
+      background: var(--ink);
+      opacity: 0.32;
+      transform-origin: left center;
+    }
+
+    .scratch.a { width: 64px; left: 26px; top: 152px; transform: rotate(-12deg); }
+    .scratch.b { width: 90px; right: 22px; top: 198px; transform: rotate(7deg); }
+    .scratch.c { width: 74px; left: 40px; bottom: 120px; transform: rotate(5deg); }
+
+    .gold-smudge {
+      position: absolute;
+      width: 100px;
+      height: 30px;
+      left: 34px;
+      bottom: 100px;
+      background: linear-gradient(90deg, transparent, rgba(184,138,42,0.7), transparent);
+      filter: blur(7px);
+      transform: rotate(-8deg);
+      opacity: 0.58;
+    }
+
+    /* Mariposas decorativas en el back, tipo macondiano */
+    .mariposa-deco {
+      position: absolute;
+      opacity: 0.55;
+    }
+
+    .mariposa-deco svg { display: block; width: 100%; height: 100%; }
+
+    .mariposa-deco.uno { top: 36px; left: 28px; width: 22px; height: 22px; transform: rotate(-15deg); }
+    .mariposa-deco.dos { top: 62px; right: 36px; width: 18px; height: 18px; transform: rotate(22deg); opacity: 0.42; }
+    .mariposa-deco.tres { bottom: 215px; right: 30px; width: 15px; height: 15px; transform: rotate(-8deg); opacity: 0.32; }
+    .mariposa-deco.cuatro { bottom: 290px; left: 36px; width: 14px; height: 14px; transform: rotate(35deg); opacity: 0.28; }
+
+    .print-note {
+      position: fixed;
+      left: 16px;
+      bottom: 14px;
+      color: #777;
+      font-family: "Menlo", monospace;
+      font-size: 11px;
+    }
+
+    @media print {
+      html, body { background: white; margin: 0; padding: 0; }
+      .sheet {
+        padding: 0;
+        min-height: auto;
+        display: block;
+        gap: 0;
+      }
+      .card {
+        box-shadow: none;
+        border: none;
+        width: 80mm;
+        height: 160mm;
+        page-break-after: always;
+        break-after: page;
+      }
+      .card:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .print-note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet" aria-label="Mockup de tarjeta doble para GABITO.v01">
+    <section class="card front" aria-label="Frente de tarjeta">
+      <div class="topline">
+        <span>SIMIO PLATEADO</span>
+        <span class="edition">FDM / V01</span>
+      </div>
+
+      <div class="figure-stage">
+        <div class="spray one"></div>
+        <div class="spray two"></div>
+        <div class="spray three"></div>
+        <img class="figure-main" src="assets/gabito-color.png" alt="Version 3D a color de Gabito">
+        <span class="mariposa-front uno"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/><path d="M 16 11 Q 14 8 13 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><path d="M 16 11 Q 18 8 19 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><circle cx="8" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/><circle cx="24" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/></g></svg></span>
+        <span class="mariposa-front dos"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/><path d="M 16 11 Q 14 8 13 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><path d="M 16 11 Q 18 8 19 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><circle cx="8" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/><circle cx="24" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/></g></svg></span>
+        <span class="mariposa-front tres"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/><path d="M 16 11 Q 14 8 13 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><path d="M 16 11 Q 18 8 19 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><circle cx="8" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/><circle cx="24" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/></g></svg></span>
+        <span class="mariposa-front cuatro"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/><path d="M 16 11 Q 14 8 13 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><path d="M 16 11 Q 18 8 19 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><circle cx="8" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/><circle cx="24" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/></g></svg></span>
+        <span class="mariposa-front cinco"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/><path d="M 16 11 Q 14 8 13 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><path d="M 16 11 Q 18 8 19 6" stroke="#3a2614" stroke-width="0.4" fill="none"/><circle cx="8" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/><circle cx="24" cy="12" r="1.2" fill="#b8860b" opacity="0.6"/></g></svg></span>
+      </div>
+
+      <div class="front-title">
+        <h1>GABITO.v01</h1>
+        <p>objeto FDM &middot; macondo &middot; archivo vivo</p>
+        <div class="batch">
+          <span>SP-002</span>
+          <span>Medell&iacute;n</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card back" aria-label="Reverso de tarjeta">
+      <div class="topline">
+        <span>certificado m&iacute;nimo</span>
+        <span>SP-002</span>
+      </div>
+
+      <span class="mariposa-deco uno"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/></g></svg></span>
+      <span class="mariposa-deco dos"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/></g></svg></span>
+      <span class="mariposa-deco tres"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/></g></svg></span>
+      <span class="mariposa-deco cuatro"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g><path d="M 16 16 Q 4 4 2 12 Q 1 18 8 18 Q 14 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 28 4 30 12 Q 31 18 24 18 Q 18 17 16 16 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 6 22 5 28 Q 6 30 11 27 Q 14 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><path d="M 16 16 Q 26 22 27 28 Q 26 30 21 27 Q 18 24 16 17 Z" fill="#f4c430" stroke="#8b6914" stroke-width="0.5"/><ellipse cx="16" cy="17" rx="0.9" ry="6" fill="#3a2614"/></g></svg></span>
+
+      <img class="brand-wordmark" src="assets/brand-wordmark-real.png" alt="Logotipo Simio Plateado">
+      <div class="rule"></div>
+
+      <p class="quote">Las cosas tienen vida propia, todo es cuesti&oacute;n de despertarles el &aacute;nima.</p>
+      <p class="source">G. Garc&iacute;a M&aacute;rquez &middot; Cien a&ntilde;os de soledad</p>
+
+      <div class="scratch a"></div>
+      <div class="scratch b"></div>
+      <div class="scratch c"></div>
+      <div class="gold-smudge"></div>
+      <img class="signature" src="assets/firma-jdme.png" alt="Firma">
+      <div class="stamp">SP</div>
+    </section>
+  </main>
+
+  <div class="print-note">Vista mockup &middot; listo para imprimir a 80 x 160 mm / 8 x 16 cm (una tarjeta por p&aacute;gina)</div>
+</body>
+</html>
